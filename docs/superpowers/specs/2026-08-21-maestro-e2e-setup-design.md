@@ -9,7 +9,7 @@ Establish the E2E testing convention for this boilerplate: build target,
 flow location, and documentation, so that every project cloning this repo —
 and every module added to it — has a ready-made pattern to write Maestro
 flows against. This is infrastructure and convention only, not a push for
-flow coverage: the app currently has just Welcome → Home navigation and no
+flow coverage: the app currently has just a single `Home` screen and no
 auth backend yet (backend lives in a separate repo, not ready).
 
 ## Scope

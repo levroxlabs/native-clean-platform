@@ -145,10 +145,10 @@ seguindo a [Regra 4 do AGENTS.md](../AGENTS.md#4-no-magic-strings-or-numbers).
 ## Convenção de nomenclatura dos flows
 
 Ainda não há nenhum flow nesta pasta — é só infraestrutura por enquanto,
-já que o app hoje só tem a navegação Welcome → Home e a autenticação está
+já que o app hoje só tem a tela `Home` e a autenticação está
 pausada até o backend (em outro repositório) ficar pronto. Quando o
 primeiro flow for escrito, nomeie o arquivo pelo fluxo que ele cobre em
-`kebab-case` (`welcome-to-home.yaml`, `sign-in.yaml`), um flow por arquivo.
+`kebab-case` (`sign-in.yaml`, `edit-profile.yaml`), um flow por arquivo.
 ```
 
 - [ ] **Step 2: Verify the file was created correctly**
@@ -316,7 +316,7 @@ pnpm e2e:build:android  # build + install the dev client on the Android emulator
 pnpm test:e2e           # run every flow in .maestro/ against the installed dev client
 ```
 
-No flows exist yet — the app currently has only Welcome → Home navigation
+No flows exist yet — the app currently has only a single `Home` screen
 and no auth backend to test against.
 ```
 
