@@ -11,11 +11,9 @@ importadas pelo stack.
 
 | Name         | Route             | Description                                              |
 | ------------ | ----------------- | ---------------------------------------------------------- |
-| `HomeScreen` | `APP_ROUTES.HOME` | Placeholder que prova que navegação, NativeWind e os design tokens funcionam de ponta a ponta. |
+| `HomeScreen` | `APP_ROUTES.HOME` | Tela inicial com um texto centralizado. |
 
 ## Conventions
 
 - Texto voltado ao usuário vive em um objeto `COPY` no topo do arquivo, nunca
   inline no JSX. Essa é a costura que o i18n vai substituir.
-- As telas leem o layout de `Screen`; elas não reimplementam o tratamento de
-  safe-area.

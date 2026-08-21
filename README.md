@@ -61,7 +61,7 @@ biome.json              linter + formatter (substitui ESLint e Prettier)
 tailwind.config.js      lê os tokens de src/theme/tokens.js
 .maestro/               flows de teste E2E (Maestro) — só o README por enquanto
 src/
-  components/           componentes compartilhados entre módulos (Button, Screen)
+  components/           componentes compartilhados entre módulos (vazio por enquanto)
   screens/               telas que não pertencem a nenhum módulo específico
   navigation/            React Navigation: stack, constantes de rota, tipos de parâmetros
   modules/               vazio por enquanto — um novo módulo é uma nova pasta aqui
