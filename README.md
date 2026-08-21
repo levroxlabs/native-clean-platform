@@ -36,6 +36,9 @@ pnpm lint:fix    # biome check --write (correções seguras)
 pnpm format      # biome format --write
 pnpm test        # jest --watchAll
 pnpm test:ci     # jest --ci
+pnpm e2e:build:ios      # builda e instala o dev client no simulador iOS
+pnpm e2e:build:android  # builda e instala o dev client no emulador Android
+pnpm test:e2e           # roda os flows do Maestro (.maestro/) no dev client já instalado
 ```
 
 ---
@@ -51,6 +54,7 @@ App.tsx                 raiz: providers + navegação
 global.css              ponto de entrada do Tailwind (importado por App.tsx)
 biome.json              linter + formatter (substitui ESLint e Prettier)
 tailwind.config.js      lê os tokens de src/theme/tokens.js
+.maestro/               flows de teste E2E (Maestro) — só o README por enquanto
 src/
   components/           componentes compartilhados entre módulos (Button, Screen)
   screens/               telas que não pertencem a nenhum módulo específico
@@ -146,7 +150,8 @@ escolher entre um stack logado e um deslogado com base no estado da sessão.
 - [x] **Padrões** — Biome substitui ESLint/Prettier, pnpm, convenções do
       projeto em `AGENTS.md`, código só em inglês, README por módulo,
       sem strings ou números mágicos, testes unitários com jest-expo +
-      React Native Testing Library.
+      React Native Testing Library, infraestrutura de E2E com Maestro
+      (sem flows ainda — veja `.maestro/README.md`).
 - [ ] **Auth** — contra a API própria do projeto, desenvolvida em um repo
       separado e ainda não pronta: cliente HTTP, `useAuth()`, `AuthProvider`,
       `expo-secure-store`, refresh de token, telas de sign-in / sign-up,
