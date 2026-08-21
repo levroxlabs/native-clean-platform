@@ -173,7 +173,8 @@ progress and does not understand custom utilities, so it would fight our tokens.
 ## 8. Tests
 
 Tests use **jest-expo** (Jest, configured for Expo/React Native) plus
-**React Native Testing Library** for components. No Detox/Maestro (E2E) yet.
+**React Native Testing Library** for components, and **Maestro** for E2E
+flows against a dev client build.
 
 - Tests are **colocated** next to the file they test — `Button.tsx` +
   `Button.test.tsx` — never in a `__tests__/` folder, matching the
@@ -201,3 +202,27 @@ pnpm test:ci    # jest --ci
 
 `pnpm test` is intentionally **not** part of `pnpm check` — typecheck and
 lint stay the fast pre-commit gate; run tests on demand or in CI.
+
+### E2E (Maestro)
+
+Flows live in `.maestro/` at the repo root — Maestro's default discovery
+location, kept outside `src/` since it isn't module code (same reasoning as
+`biome.json` or `metro.config.js` living at root). See
+[`.maestro/README.md`](.maestro/README.md) for prerequisites, how to build
+the dev client, and how to run flows.
+
+- Maestro requires a **dev client build** (`expo-dev-client`), not Expo Go —
+  once any module adds custom native code, Expo Go stops working for E2E
+  while the dev client keeps working.
+- Elements are selected by visible text or `testID`. Add a `testID` constant
+  (see [Rule 4](#4-no-magic-strings-or-numbers)) only when text selection is
+  ambiguous (icon buttons, repeated text) — don't add them speculatively.
+
+```bash
+pnpm e2e:build:ios      # build + install the dev client on the iOS simulator
+pnpm e2e:build:android  # build + install the dev client on the Android emulator
+pnpm test:e2e           # run every flow in .maestro/ against the installed dev client
+```
+
+No flows exist yet — the app currently has only Welcome → Home navigation
+and no auth backend to test against.
