@@ -177,12 +177,19 @@ Tests use **jest-expo** (Jest, configured for Expo/React Native) plus
 
 - Tests are **colocated** next to the file they test — `Button.tsx` +
   `Button.test.tsx` — never in a `__tests__/` folder, matching the
-  module-based structure from [Rule 5](#5-structure).
+  module-based structure from [Rule 5](#5-structure). The `.test.ts`/
+  `.test.tsx` suffix is required, not just a naming preference: it is
+  exactly what the Biome override below matches on, so anything named
+  differently (`.spec.tsx`, files under `__tests__/`) still runs as a test
+  but silently loses the `noMagicNumbers` exemption and fails `pnpm lint`.
 - Pure logic (`src/utils/`, hooks, module logic) is tested with plain Jest:
   `describe`/`it`/`expect`.
 - Components and screens are tested with `@testing-library/react-native`,
   asserting on user-observable behavior — rendered text, accessibility
-  state, `fireEvent` interactions. Never snapshot tests.
+  state, `fireEvent` interactions. Never snapshot tests. In the installed
+  version, `render()` and `fireEvent.*()` return Promises and must be
+  `await`ed — omitting `await` produces a confusing failure later in the
+  test rather than an obvious error at the call site.
 - Test files are exempt from Biome's `noMagicNumbers` (see the
   `**/*.test.ts`/`**/*.test.tsx` override in `biome.json`) since assertions
   compare against literal values by design. Every other rule still applies.
