@@ -20,22 +20,27 @@ Requer pnpm. Se você não tem: `corepack enable pnpm`.
 
 ```bash
 pnpm install
-pnpm start          # Metro + QR code do Expo Go
-pnpm android        # abre em um emulador/dispositivo Android
-pnpm ios            # abre no simulador iOS (somente macOS)
+pnpm start          # Metro — conecta ao dev client (requer build prévio, veja abaixo)
+pnpm android        # abre no emulador/dispositivo Android (requer dev client instalado)
+pnpm ios            # abre no simulador iOS (somente macOS; requer dev client instalado)
 pnpm web            # abre no navegador
 ```
+
+Como `expo-dev-client` é uma dependência do projeto, `pnpm start`/`android`/`ios`
+não abrem mais o Expo Go — é preciso instalar o dev client uma vez
+(`pnpm e2e:build:ios` ou `pnpm e2e:build:android`, veja
+[`.maestro/README.md`](.maestro/README.md)) antes de rodar esses comandos.
 
 Checagens de qualidade:
 
 ```bash
-pnpm check       # typecheck + lint — rode antes de cada commit
-pnpm typecheck   # tsc --noEmit
-pnpm lint        # biome check
-pnpm lint:fix    # biome check --write (correções seguras)
-pnpm format      # biome format --write
-pnpm test        # jest --watchAll
-pnpm test:ci     # jest --ci
+pnpm check              # typecheck + lint — rode antes de cada commit
+pnpm typecheck          # tsc --noEmit
+pnpm lint               # biome check
+pnpm lint:fix           # biome check --write (correções seguras)
+pnpm format             # biome format --write
+pnpm test               # jest --watchAll
+pnpm test:ci            # jest --ci
 pnpm e2e:build:ios      # builda e instala o dev client no simulador iOS
 pnpm e2e:build:android  # builda e instala o dev client no emulador Android
 pnpm test:e2e           # roda os flows do Maestro (.maestro/) no dev client já instalado

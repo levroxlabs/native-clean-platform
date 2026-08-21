@@ -224,5 +224,5 @@ pnpm e2e:build:android  # build + install the dev client on the Android emulator
 pnpm test:e2e           # run every flow in .maestro/ against the installed dev client
 ```
 
-No flows exist yet — the app currently has only Welcome → Home navigation
+No flows exist yet — the app currently has only a single `Home` screen
 and no auth backend to test against.
