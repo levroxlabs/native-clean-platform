@@ -51,8 +51,11 @@ pnpm test:e2e           # roda os flows do Maestro (.maestro/) no dev client já
 ## Estrutura de pastas
 
 Organizado **por módulo, não por tipo de arquivo**. Um novo módulo é uma
-nova pasta em `src/modules/`, autocontida. Todo módulo tem seu próprio
-`README.md` documentando o que ele exporta.
+nova pasta autocontida em `src/modules/`, com sua própria API pública,
+telas, componentes e hooks. Todo módulo tem seu próprio `README.md`
+documentando o que ele exporta — veja
+[`src/modules/README.md`](src/modules/README.md) para o detalhamento
+completo das convenções.
 
 ```
 App.tsx                 raiz: providers + navegação
@@ -61,17 +64,29 @@ biome.json              linter + formatter (substitui ESLint e Prettier)
 tailwind.config.js      lê os tokens de src/theme/tokens.js
 .maestro/               flows de teste E2E (Maestro) — só o README por enquanto
 src/
-  components/           componentes compartilhados entre módulos (vazio por enquanto)
-  screens/               telas que não pertencem a nenhum módulo específico
-  navigation/            React Navigation: stack, constantes de rota, tipos de parâmetros
-  modules/               vazio por enquanto — um novo módulo é uma nova pasta aqui
-  theme/                 design tokens (fonte única da verdade)
-  utils/                 helpers puros (cn, formatadores)
+  components/            componentes compartilhados entre módulos (vazio por enquanto)
+  screens/                telas que não pertencem a nenhum módulo específico
+  navigation/             React Navigation: stack, constantes de rota, tipos de parâmetros
+  modules/                vazio por enquanto — um módulo por pasta, no formato abaixo
+    <name>/
+      api/                chamadas ao backend deste módulo
+      components/         componentes específicos deste módulo (começa flat)
+      hooks/               hooks e Contexts específicos deste módulo
+      screens/             telas pertencentes a este módulo
+      constants.ts         constantes compartilhadas dentro do módulo
+      types.ts             tipos compartilhados dentro do módulo
+      index.ts             único ponto de entrada que outros arquivos podem importar
+      README.md            obrigatório — o que o módulo exporta (veja AGENTS.md)
+  theme/                  design tokens (fonte única da verdade)
+  utils/                  helpers puros (cn, formatadores)
 ```
 
-`src/hooks/`, `src/services/` e `src/store/` só são criados quando algo
-realmente precisar deles — veja [AGENTS.md](AGENTS.md) para saber o propósito
-de cada um.
+Nada fora de um módulo importa um arquivo de dentro dele — só o que o
+`index.ts` exporta — e módulos não importam uns aos outros. Código
+compartilhado sobe para `src/components/` (a partir do segundo consumidor)
+ou para um módulo de topo como `src/hooks/`, `src/services/` ou
+`src/store/`, criados apenas quando algo realmente precisar deles — veja
+[AGENTS.md](AGENTS.md) para o propósito de cada um.
 
 ---
 
