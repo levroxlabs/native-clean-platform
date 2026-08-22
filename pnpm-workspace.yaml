@@ -21,4 +21,4 @@ minimumReleaseAgeExclude:
   - '@expo/metro-runtime@57.0.12'
 
 allowBuilds:
-  unrs-resolver: set this to true or false
+  unrs-resolver: true
