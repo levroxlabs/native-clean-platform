@@ -20,7 +20,7 @@ propositalmente CommonJS: o mesmo arquivo alimenta o `tailwind.config.js`
 
 | Name              | Description                                                        |
 | ----------------- | ------------------------------------------------------------------ |
-| `px(value)`       | Converte um token CSS (`'16px'`) para o número que as APIs nativas esperam (`16`). |
+| `parsePixels(value)` | Converte um token CSS (`'16px'`) para o número que as APIs nativas esperam (`16`). |
 
 ## Types
 

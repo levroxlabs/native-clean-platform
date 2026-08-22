@@ -102,9 +102,9 @@ para CSS antes de converter para estilos nativos. Para usar um token fora do
 Tailwind:
 
 ```ts
-import { colors, px, spacing } from '@/theme';
+import { colors, parsePixels, spacing } from '@/theme';
 
-<ActivityIndicator color={colors.brand[500]} size={px(spacing[6])} />;
+<ActivityIndicator color={colors.brand[500]} size={parsePixels(spacing[6])} />;
 ```
 
 ### Cores brutas vs. semânticas
