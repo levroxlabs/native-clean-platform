@@ -10,7 +10,10 @@ o ponto de partida que outros projetos clonam.
 autenticação — o backend com o qual o app vai conversar está em um
 repositório separado e ainda não está pronto.
 
-> As convenções de código estão em **[AGENTS.md](AGENTS.md)** — leia antes de contribuir.
+> **Convenções de código** (como escrever) estão em **[AGENTS.md](AGENTS.md)**.
+> **Arquitetura** (o que existe, fronteiras entre módulos, decisões travadas e
+> o que ainda falta) está em **[ARCHITECTURE.md](ARCHITECTURE.md)**. Leia os
+> dois antes de contribuir.
 
 ---
 
@@ -58,27 +61,17 @@ documentando o que ele exporta — veja
 completo das convenções.
 
 ```
-App.tsx                 raiz: providers + navegação
-global.css              ponto de entrada do Tailwind (importado por App.tsx)
-biome.json              linter + formatter (substitui ESLint e Prettier)
-tailwind.config.js      lê os tokens de src/theme/tokens.js
-.maestro/               flows de teste E2E (Maestro) — só o README por enquanto
+App.tsx              raiz: providers + navegação
+biome.json            linter + formatter (substitui ESLint e Prettier)
+tailwind.config.js    lê os tokens de src/theme/tokens.js
+.maestro/             flows de teste E2E (Maestro)
 src/
-  components/            componentes compartilhados entre módulos (vazio por enquanto)
-  screens/                telas que não pertencem a nenhum módulo específico
-  navigation/             React Navigation: stack, constantes de rota, tipos de parâmetros
-  modules/                vazio por enquanto — um módulo por pasta, no formato abaixo
-    <name>/
-      api/                chamadas ao backend deste módulo
-      components/         componentes específicos deste módulo (começa flat)
-      hooks/               hooks e Contexts específicos deste módulo
-      screens/             telas pertencentes a este módulo
-      constants.ts         constantes compartilhadas dentro do módulo
-      types.ts             tipos compartilhados dentro do módulo
-      index.ts             único ponto de entrada que outros arquivos podem importar
-      README.md            obrigatório — o que o módulo exporta (veja AGENTS.md)
-  theme/                  design tokens (fonte única da verdade)
-  utils/                  helpers puros (cn, formatadores)
+  components/          compartilhados entre módulos (vazio por enquanto)
+  screens/              telas sem módulo próprio
+  navigation/           React Navigation: stack, rotas, tipos de parâmetro
+  modules/              um módulo por pasta — veja src/modules/README.md
+  theme/                design tokens (fonte única da verdade)
+  utils/                helpers puros (cn, formatadores)
 ```
 
 Nada fora de um módulo importa um arquivo de dentro dele — só o que o
@@ -87,6 +80,10 @@ compartilhado sobe para `src/components/` (a partir do segundo consumidor)
 ou para um módulo de topo como `src/hooks/`, `src/services/` ou
 `src/store/`, criados apenas quando algo realmente precisar deles — veja
 [AGENTS.md](AGENTS.md) para o propósito de cada um.
+
+A árvore completa de hoje, com o papel de cada arquivo, e a tabela da regra
+de fronteira entre módulos estão em [ARCHITECTURE.md](ARCHITECTURE.md),
+seção 2.
 
 ---
 
@@ -127,43 +124,36 @@ Dark mode e rebranding acontecem então em um único lugar (`semanticColors`).
 3. Para uma fonte customizada: carregue com `expo-font`, depois defina `typography.fontFamily.sans`.
 4. Atualize `name` e `slug` em `app.json`, e `name` em `package.json`.
 
-Nenhuma tela precisa ser tocada.
+Nenhuma tela precisa ser tocada. O porquê de `tokens.js` ser CommonJS e a
+regra de estilização (só NativeWind, sem `StyleSheet`) estão detalhados em
+[ARCHITECTURE.md](ARCHITECTURE.md), seção 5.
 
 ---
 
 ## Decisões e porquês
 
-- **Biome, não ESLint + Prettier.** Um binário, uma config, um passe — sem
-  matriz de plugins para manter sincronizada entre os apps que clonam este
-  repo. Também aplica duas das nossas convenções diretamente: componentes
-  como arrow function e nenhum número mágico.
-- **pnpm com `node-linker=hoisted`.** O Metro não segue de forma confiável os
-  `node_modules` simbólicos do pnpm, então o `.npmrc` força um layout plano em
-  disco. Mantenha essa linha se migrar para um monorepo.
-- **NativeWind v4 + Tailwind 3.4**, não o preview do NativeWind v5: v4 é a
-  versão estável e mantém `tailwind.config.js` em JS, que é o que permite os
-  tokens virem de um arquivo compartilhado. O Tailwind v4 move os tokens para
-  `@theme` no CSS.
-- **React Navigation**, não Expo Router: rotas explícitas e tipadas em
-  `src/navigation/`, sem acoplar a estrutura de pastas à navegação.
-- **`noUncheckedIndexedAccess`** ligado: acesso indexado retorna
-  `T | undefined`. Mais rígido, e pega bugs reais de acesso a array/record.
-- **Sem ordenação de classes Tailwind.** O `useSortedClasses` do Biome ainda é
-  um trabalho em andamento e não entende utilitários customizados, então
-  brigaria com nossos tokens semânticos. Revisitar quando a regra estabilizar.
+As decisões travadas — por que Biome em vez de ESLint + Prettier, por que
+pnpm com `hoisted`, por que NativeWind v4 e não v5, por que React Navigation
+e não Expo Router, `noUncheckedIndexedAccess`, sem ordenação de classes
+Tailwind — e o porquê de cada uma vivem em
+[ARCHITECTURE.md](ARCHITECTURE.md), seção 9. Mantidas só lá para não haver
+duas explicações que possam divergir.
 
 ---
 
 ## Estado atual da navegação
 
-`src/navigation/RootNavigator.tsx` renderiza um único stack (`AppStack`) com
-uma tela placeholder, ali para provar que navegação, NativeWind e os tokens
-funcionam de ponta a ponta. Quando a autenticação for implementada, a raiz vai
-escolher entre um stack logado e um deslogado com base no estado da sessão.
+Ver [ARCHITECTURE.md](ARCHITECTURE.md), seção 6 — o que a navegação faz hoje
+e o que muda quando a autenticação entrar.
 
 ---
 
 ## Roadmap
+
+> O que falta implementar é rastreado aqui como progresso; o mesmo conteúdo
+> aparece em [ARCHITECTURE.md](ARCHITECTURE.md), seção 10, como um registro de
+> "isto não existe ainda, não é omissão" — os dois têm propósitos diferentes,
+> mas descrevem a mesma lacuna.
 
 - [x] **Setup** — Expo + TS, NativeWind + tokens, estrutura de pastas,
       React Navigation, README.

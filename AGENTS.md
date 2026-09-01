@@ -2,6 +2,12 @@
 
 Read this before writing any code in this repository.
 
+**This file is about *how* to write code** — naming, structure, style,
+testing conventions. **For *what already exists*** — the folder tree, the
+module-boundary rules, the design-token pipeline, navigation, and which
+technical decisions are locked in and why — see
+**[ARCHITECTURE.md](ARCHITECTURE.md)**.
+
 **Scope: front-end only.** The backend this app authenticates against lives in a
 separate repository. Never add server, database, or token-issuing code here.
 
@@ -135,6 +141,9 @@ folder map.
   second module needs it.
 - `src/services/` knows nothing about React. Hooks and Contexts live in
   `src/hooks/` or inside the module that owns them.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md), section 2, for the full folder tree
+as it exists today and the module-boundary table.
 
 ## 6. Styling
 
