@@ -21,7 +21,7 @@ const mockFetch = jest.fn();
 
 beforeEach(() => {
   mockFetch.mockReset();
-  global.fetch = mockFetch as unknown as typeof fetch;
+  globalThis.fetch = mockFetch as unknown as typeof fetch;
   configureAuthorization(null);
 });
 
