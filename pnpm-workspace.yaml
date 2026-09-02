@@ -19,6 +19,7 @@ minimumReleaseAgeExclude:
   - expo-modules-jsi@57.0.5
   - expo@57.0.15
   - '@expo/metro-runtime@57.0.12'
+  - expo-secure-store@57.0.3
 
 allowBuilds:
   unrs-resolver: true
