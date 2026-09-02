@@ -1051,6 +1051,9 @@ export const PASSWORD_POLICY_PATTERN = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]
 /** Presence only, as on the server: see `signInSchema` below. */
 const MIN_SUBMITTED_PASSWORD_LENGTH = 1;
 
+/** Presence, not shape: the client has no business asserting JWT structure. */
+const MIN_ACCESS_TOKEN_LENGTH = 1;
+
 /**
  * Rendered straight to the user by react-hook-form, so these are copy, not
  * diagnostics: zod's defaults read like "Too small: expected string to have
@@ -1096,7 +1099,9 @@ export const signInSchema = z.object({
 
 export const registerResponseSchema = z.object({ id: z.uuid() });
 
-export const loginResponseSchema = z.object({ accessToken: z.string().min(MIN_PASSWORD_LENGTH) });
+export const loginResponseSchema = z.object({
+  accessToken: z.string().min(MIN_ACCESS_TOKEN_LENGTH),
+});
 
 /**
  * Dates stay ISO strings — nothing formats or compares one yet, so converting
@@ -1171,6 +1176,13 @@ describe('login', () => {
     expect(mockRequest).toHaveBeenCalledWith(AUTH_ENDPOINTS.LOGIN, {
       method: HTTP_METHODS.POST,
       body: CREDENTIALS,
+    });
+  });
+  it('rejects an empty access token as a contract drift', async () => {
+    mockRequest.mockResolvedValue({ accessToken: '' });
+
+    await expect(login(CREDENTIALS)).rejects.toMatchObject({
+      code: API_ERROR_CODES.UNEXPECTED_RESPONSE,
     });
   });
 });
@@ -1274,7 +1286,7 @@ export const fetchMe = async (): Promise<User> => {
 - [ ] **Step 9: Run both test files and confirm they pass**
 
 Run: `pnpm exec jest src/modules/auth/api`
-Expected: PASS, 19 tests across two files.
+Expected: PASS, 20 tests across two files.
 
 - [ ] **Step 10: Verify and commit**
 
