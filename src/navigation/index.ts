@@ -1,4 +1,4 @@
-export type { AppRoute } from './constants';
-export { APP_ROUTES } from './constants';
+export type { AppRoute, RootRoute } from './constants';
+export { APP_ROUTES, ROOT_ROUTES } from './constants';
 export { RootNavigator } from './RootNavigator';
-export type { AppStackParamList } from './types';
+export type { AppStackParamList, RootStackParamList } from './types';
