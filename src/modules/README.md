@@ -9,6 +9,7 @@ modules/<name>/
   api/          chamadas ao backend deste módulo
   components/   componentes específicos deste módulo
   hooks/        hooks específicos deste módulo
+  navigation/   rotas, tipos de parâmetro e o navigator deste módulo
   screens/      telas pertencentes a este módulo
   constants.ts  constantes compartilhadas dentro do módulo
   types.ts
@@ -18,8 +19,9 @@ modules/<name>/
 
 ## Modules
 
-_Nenhum ainda._ Adicione um módulo criando uma pasta aqui que siga o
-formato acima.
+| Name   | Description                                                          |
+| ------ | ---------------------------------------------------------------------- |
+| `auth` | Sessão do app: cadastro, login, restauração no boot, logout e o estado que a navegação consulta. |
 
 ## Conventions
 

@@ -4,11 +4,14 @@ Base reutilizável para apps React Native. **Isto não é um app finalizado** �
 o ponto de partida que outros projetos clonam.
 
 **Stack:** Expo SDK 57 (managed) · React Native 0.86 · TypeScript · NativeWind v4
-(Tailwind 3.4) · React Navigation 7 · Biome · pnpm
+(Tailwind 3.4) · React Navigation 7 · TanStack Query 5 · react-hook-form + zod ·
+expo-secure-store · Biome · pnpm
 
-**Status:** estrutura, ferramentas e convenções prontas. Ainda sem
-autenticação — o backend com o qual o app vai conversar está em um
-repositório separado e ainda não está pronto.
+**Status:** estrutura, ferramentas e convenções prontas, mais o módulo `auth`
+implementado contra os três endpoints de `/auth` de `api-clean-platform`:
+cadastro, login, restauração da sessão no boot, logout e gate de navegação.
+Refresh de token e logout no servidor ficam de fora porque a API ainda não tem
+esses endpoints.
 
 > **Convenções de código** (como escrever) estão em **[AGENTS.md](AGENTS.md)**.
 > **Arquitetura** (o que existe, fronteiras entre módulos, decisões travadas e
@@ -23,6 +26,7 @@ Requer pnpm. Se você não tem: `corepack enable pnpm`.
 
 ```bash
 pnpm install
+cp .env.example .env    # e ajuste EXPO_PUBLIC_API_URL se a API não estiver em localhost:3000
 pnpm start          # Metro — conecta ao dev client (requer build prévio, veja abaixo)
 pnpm android        # abre no emulador/dispositivo Android (requer dev client instalado)
 pnpm ios            # abre no simulador iOS (somente macOS; requer dev client instalado)
@@ -143,8 +147,9 @@ duas explicações que possam divergir.
 
 ## Estado atual da navegação
 
-Ver [ARCHITECTURE.md](ARCHITECTURE.md), seção 6 — o que a navegação faz hoje
-e o que muda quando a autenticação entrar.
+Ver [ARCHITECTURE.md](ARCHITECTURE.md), seção 6 — o composition root que lista
+módulos em vez de telas, e o gate que escolhe entre o stack logado e o
+deslogado.
 
 ---
 
@@ -162,10 +167,10 @@ e o que muda quando a autenticação entrar.
       sem strings ou números mágicos, testes unitários com jest-expo +
       React Native Testing Library, infraestrutura de E2E com Maestro
       (sem flows ainda — veja `.maestro/README.md`).
-- [ ] **Auth** — contra a API própria do projeto, desenvolvida em um repo
-      separado e ainda não pronta: cliente HTTP, `useAuth()`, `AuthProvider`,
-      `expo-secure-store`, refresh de token, telas de sign-in / sign-up,
-      navegação condicional. Implementado como um módulo em
-      `src/modules/auth/` quando a API estiver pronta.
-- [ ] **Polimento** — estados de erro e loading, validação de formulário,
-      variáveis de ambiente, guia de adoção do boilerplate.
+- [x] **Auth** — módulo em `src/modules/auth/` contra `api-clean-platform`:
+      cliente HTTP em `src/services/http/`, `useAuth()` / `AuthProvider`,
+      token no `expo-secure-store`, telas de sign-in / sign-up com validação,
+      e navegação condicional entre o stack logado e o deslogado. Refresh de
+      token e logout no servidor ficam adiados até a API publicar os
+      endpoints — o único ponto a mudar é `configureAuthorization`.
+- [ ] **Polimento** — guia de adoção do boilerplate.

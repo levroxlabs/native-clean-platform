@@ -8,7 +8,8 @@ specs e planos de decisões pontuais já tomadas — são referência complement
 não substituem este arquivo.
 
 **Stack hoje:** Expo SDK 57 (managed) · React Native 0.86 · TypeScript 6 ·
-NativeWind v4 (Tailwind 3.4) · React Navigation 7 · Jest (jest-expo) +
+NativeWind v4 (Tailwind 3.4) · React Navigation 7 · TanStack Query 5 ·
+react-hook-form 7 + zod 4 · expo-secure-store · Jest (jest-expo) +
 React Native Testing Library · Maestro · Biome · pnpm
 
 ---
@@ -31,9 +32,11 @@ código de servidor, banco ou emissão de token. É por isso que este documento
 não tem seção de banco de dados, taxonomia de erro de domínio ou camada de
 infra: nada disso é responsabilidade deste lado da fronteira.
 
-Hoje **não há nenhum módulo** em `src/modules/` — o primeiro será `auth`,
-quando a API estiver pronta (§10). O princípio está aqui porque é ele que vai
-decidir onde cada arquivo novo cai a partir daí.
+Hoje existe **um módulo**, `auth` (§2), construído contra os três endpoints
+de `/auth` de `api-clean-platform`. Ele é a referência de formato para o
+próximo: é o `index.ts` dele que define o que o resto do app enxerga, e foi
+ele que forçou à existência os dois módulos de topo que faltavam —
+`src/config/` e `src/services/http/`.
 
 ---
 
@@ -47,25 +50,57 @@ biome.json                  linter + formatter (substitui ESLint e Prettier)
 tailwind.config.js          lê os tokens de src/theme/tokens.js
 tsconfig.json               extends expo/tsconfig.base — strict, noUncheckedIndexedAccess, alias @/
 pnpm-workspace.yaml         settings do pnpm — pnpm 11 não lê mais .npmrc (§9)
+jest.setup.ts               EXPO_PUBLIC_* de teste + keychain em memória (mock de expo-secure-store)
+.env.example                EXPO_PUBLIC_API_URL — copie para .env antes de rodar
 .maestro/                   flows de teste E2E (Maestro) — só o README por enquanto
 docs/superpowers/           specs e planos das decisões já tomadas (testes unitários, E2E)
 src/
 ├── components/             componentes compartilhados por mais de um módulo — vazio por enquanto
 │   ├── index.ts             (sem exports ainda)
 │   └── README.md
+├── config/                  variáveis de ambiente, validadas na carga
+│   ├── env.ts               readApiBaseUrl() + API_BASE_URL — falha alto se faltar
+│   ├── env.test.ts          colocado
+│   ├── index.ts
+│   └── README.md
+├── services/                 I/O sem React — nem hook, nem contexto, nem componente
+│   ├── http/
+│   │   ├── client.ts        request() + configureAuthorization() — o seam do token
+│   │   ├── client.test.ts   colocado
+│   │   ├── ApiError.ts      o único tipo de erro que o cliente lança
+│   │   ├── errorCodes.ts    API_ERROR_CODES — contrato de código copiado da API
+│   │   ├── types.ts
+│   │   ├── index.ts
+│   │   └── README.md
+│   └── README.md
 ├── screens/                 telas que não pertencem a nenhum módulo específico
-│   ├── HomeScreen.tsx       única tela hoje — prova navegação + NativeWind + tokens de ponta a ponta
+│   ├── HomeScreen.tsx       o shell logado — prova navegação + NativeWind + tokens de ponta a ponta
+│   ├── SplashScreen.tsx     só durante o boot, enquanto o token guardado é verificado
 │   ├── index.ts
 │   └── README.md
-├── navigation/               React Navigation: stack, nomes de rota, tipos de parâmetro
-│   ├── RootNavigator.tsx    NavigationContainer que envolve o stack do app
-│   ├── AppStack.tsx         as telas do app — hoje só HomeScreen
-│   ├── constants.ts         APP_ROUTES — todo nome de rota do app
-│   ├── types.ts             AppStackParamList + registro global de ReactNavigation.RootParamList
+├── navigation/               composition root: lista módulos, não telas
+│   ├── RootNavigator.tsx    splash enquanto a sessão é desconhecida, depois o NavigationContainer
+│   ├── RootStack.tsx        um Stack.Screen por módulo — renderiza só o lado que a sessão escolhe
+│   ├── RootNavigator.test.tsx  colocado — o gate nos três estados de sessão
+│   ├── AppStack.tsx         o shell logado — hoje só HomeScreen
+│   ├── constants.ts         ROOT_ROUTES (um por módulo) + APP_ROUTES
+│   ├── types.ts             RootStackParamList + registro global de ReactNavigation.RootParamList
 │   ├── index.ts
 │   └── README.md
-├── modules/                  vazio por enquanto — nenhum módulo criado ainda
-│   └── README.md             convenção documentada, à espera do primeiro módulo (auth, §10)
+├── modules/                  um módulo hoje: auth
+│   ├── auth/
+│   │   ├── api/             endpoints.ts, authApi.ts, schemas.ts (zod) + testes colocados
+│   │   ├── components/      FormTextField.tsx, SubmitButton.tsx — internos deste módulo
+│   │   ├── hooks/           useAuth.ts
+│   │   ├── navigation/      AuthStack.tsx, constants.ts, types.ts
+│   │   ├── screens/         SignInScreen.tsx, SignUpScreen.tsx + testes colocados
+│   │   ├── AuthContext.ts   arquivo próprio para o provider e o hook não formarem ciclo
+│   │   ├── AuthProvider.tsx dono do token e da sessão + teste colocado
+│   │   ├── storage.ts       keychain (expo-secure-store); storage.web.ts é o fallback web
+│   │   ├── errorCopy.ts     code da API → copy; a message da API nunca vai para a tela
+│   │   ├── constants.ts, types.ts, index.ts
+│   │   └── README.md
+│   └── README.md             convenção do formato de módulo
 ├── theme/                    design tokens — fonte única da verdade
 │   ├── tokens.js             CommonJS: alimenta tailwind.config.js (Node) e o TS (via index.ts)
 │   ├── tokens.d.ts           tipagem do tokens.js
@@ -91,6 +126,8 @@ e as regras que atravessam pastas.
 | arquivo dentro de `src/modules/<m>/**` | qualquer arquivo do mesmo módulo |
 | qualquer arquivo fora de `src/modules/<m>/` | só o que `src/modules/<m>/index.ts` exporta |
 | `src/modules/<m>/**` | nunca `src/modules/<outro>/**` |
+| `src/services/**` | nada de React e nada de módulo — só rede, storage e afins |
+| `src/config/**` | nada além do ambiente; é folha, não importa ninguém |
 
 Um componente só sai de dentro de um módulo para `src/components/` quando um
 **segundo** módulo passa a precisar dele — antes disso, mover é especulação.
@@ -98,7 +135,7 @@ Um componente só sai de dentro de um módulo para `src/components/` quando um
 **Sem lint nem dependency-cruiser checando isso hoje.** Diferente do repo da
 API, que já tem uma tabela de fronteira equivalente pronta para o dia em que
 o lint de fronteira entrar, aqui a regra é convenção pura, sustentada em
-review — e ainda não há módulo nenhum para violá-la.
+review.
 
 `components/`, assim como `modules/<m>/components/`, começa **flat** (um
 arquivo por componente). Subpastas por categoria (`ui/`, `layout/`,
@@ -204,39 +241,49 @@ objeto literal solto no JSX.
 `src/navigation/`, sem acoplar a estrutura de pastas à navegação. Toda a
 navegação vive ali e em nenhum outro lugar.
 
-`RootNavigator` é o `NavigationContainer` que envolve `AppStack`, o stack com
-as telas do app. Nomes de rota nunca são literais de string no local de
-chamada — vêm de `APP_ROUTES`, um `const object` (não `enum` — não erasure
-limpo e peso em runtime, regra 4 do `AGENTS.md`), com `AppRoute` derivado por
-`(typeof APP_ROUTES)[keyof typeof APP_ROUTES]`.
+`src/navigation/` é um **composition root**: ele lista módulos, não telas.
+`RootStack` tem um `Stack.Screen` por módulo, e as telas de cada módulo ficam
+no navigator do próprio módulo (`src/modules/auth/navigation/AuthStack.tsx`).
+Nomes de rota nunca são literais de string no local de chamada — vêm de
+`ROOT_ROUTES` e `APP_ROUTES`, `const objects` (não `enum` — não erasure limpo
+e peso em runtime, regra 4 do `AGENTS.md`), com as uniões derivadas por
+`(typeof X)[keyof typeof X]`.
 
-`AppStackParamList` (em `types.ts`) é registrado globalmente:
+`RootStackParamList` (em `types.ts`) é registrado globalmente:
 
 ```ts
 declare global {
   namespace ReactNavigation {
-    interface RootParamList extends AppStackParamList {}
+    interface RootParamList extends RootStackParamList {}
   }
 }
 ```
 
 É esse registro que faz `navigation.navigate()` ser tipado em qualquer lugar
-do app sem precisar importar a lista de parâmetros manualmente.
+do app sem precisar importar a lista de parâmetros manualmente. Cada entrada
+usa `NavigatorScreenParams<...>`, que é o que mantém tipado um
+`navigate(ROOT_ROUTES.APP, { screen: APP_ROUTES.HOME })` aninhado.
 
-**Adicionar uma tela é sempre três edições:** uma rota em `constants.ts`, uma
-entrada em `AppStackParamList` (`types.ts`), e um `Stack.Screen` em
-`AppStack.tsx`. Esquecer qualquer uma quebra o `tsc` — não é convenção, é o
-compilador.
+**Adicionar uma tela é sempre três edições — no trio do módulo dono dela:**
+uma rota em `constants.ts`, uma entrada na lista de parâmetros em `types.ts`,
+e um `Stack.Screen` no navigator daquele módulo. Esquecer qualquer uma quebra
+o `tsc` — não é convenção, é o compilador. Adicionar um **módulo** novo toca o
+trio dele mais uma linha em cada um dos três arquivos de `src/navigation/`.
 
 ### Estado atual
 
-Stack único (`AppStack`), sem gate de autenticação — hoje com uma única tela,
-`HomeScreen`. Quando a auth for implementada, `RootNavigator` passa a
-escolher entre um stack logado e um deslogado com base no estado da sessão.
-Quando módulos de domínio existirem, cada um pode ganhar seu próprio
-navigator, com `src/navigation/` virando um composition root fino — desenho
-já registrado na skill `modularizing-react-navigation` (`.claude/skills/`),
-sem código ainda porque só há um módulo candidato (`auth`) e ele não existe.
+`RootNavigator` mostra o `SplashScreen` enquanto a sessão é desconhecida
+(`AUTH_STATUSES.LOADING`) e só então monta o `NavigationContainer` — montar o
+container durante o boot significaria montar um navigator cuja primeira tela
+seria trocada em seguida.
+
+`RootStack` renderiza **um lado só**: `AuthStack` quando deslogado, `AppStack`
+quando logado. Renderizar só um lado, em vez de registrar os dois e navegar,
+é o que deixa o botão voltar do Android sem histórico para retornar a uma tela
+logada depois do logout.
+
+O desenho é o da skill `modularizing-react-navigation` (`.claude/skills/`),
+agora com código: `auth` é o primeiro módulo a ter seu próprio navigator.
 
 ---
 
@@ -361,12 +408,10 @@ arrow function e nenhum número mágico.
 Listado para não ser confundido com omissão, sem detalhar o que não foi
 construído:
 
-módulos de domínio (o primeiro será `auth`, contra a API própria do projeto,
-ainda não pronta) · cliente HTTP · `useAuth()` / `AuthProvider` ·
-`expo-secure-store` · refresh de token · telas de sign-in / sign-up ·
-navegação condicional entre stack logado e deslogado · componente
-compartilhado em `src/components/` (vazio — nenhum segundo consumidor
-apareceu ainda) · `src/hooks/`, `src/services/`, `src/store/` (criados só
-quando algo precisar deles, §1) · estados de erro e loading · validação de
-formulário · variáveis de ambiente · flow de E2E no Maestro · fronteira de
-módulo verificada por lint/dependency-cruiser (§2).
+refresh de token e logout no servidor (a API não tem os endpoints; enquanto
+não tiver, um `401 INVALID_ACCESS_TOKEN` encerra a sessão e o logout é local —
+o único ponto a mudar é `configureAuthorization`) · password reset ·
+verificação de e-mail · componente compartilhado em `src/components/` (vazio —
+nenhum segundo consumidor apareceu ainda) · `src/hooks/`, `src/store/`
+(criados só quando algo precisar deles, §1) · flow de E2E no Maestro ·
+fronteira de módulo verificada por lint/dependency-cruiser (§2).
