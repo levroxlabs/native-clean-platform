@@ -978,6 +978,18 @@ describe('signUpSchema', () => {
     );
   });
 
+  it('reports human copy rather than zod internals', () => {
+    // If this fails on the message and not on the parse, the installed zod
+    // wants `{ error: '...' }` instead of the string shorthand — change the
+    // four call sites in `schemas.ts`, not this expectation.
+    const parsed = signUpSchema.safeParse({ email: 'nope', password: VALID_PASSWORD });
+
+    expect(parsed.success).toBe(false);
+    expect(parsed.success ? null : parsed.error.issues[0]?.message).toBe(
+      'Enter a valid email address.',
+    );
+  });
+
   it('trims the email before validating it', () => {
     const parsed = signUpSchema.safeParse({ email: `  ${VALID_EMAIL}  `, password: VALID_PASSWORD });
 
@@ -1008,18 +1020,6 @@ describe('userSchema', () => {
     });
 
     expect(parsed.success).toBe(true);
-  });
-
-  it('reports human copy rather than zod internals', () => {
-    // If this fails on the message and not on the parse, the installed zod
-    // wants `{ error: '...' }` instead of the string shorthand — change the
-    // four call sites in `schemas.ts`, not this expectation.
-    const parsed = signUpSchema.safeParse({ email: 'nope', password: VALID_PASSWORD });
-
-    expect(parsed.success).toBe(false);
-    expect(parsed.success ? null : parsed.error.issues[0]?.message).toBe(
-      'Enter a valid email address.',
-    );
   });
 
   it('rejects a profile missing a field the app renders', () => {
