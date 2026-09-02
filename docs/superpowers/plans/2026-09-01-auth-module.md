@@ -24,6 +24,7 @@ Every task's requirements implicitly include this section. Values are copied ver
 - **`noUncheckedIndexedAccess` is on** — indexing a record yields `T | undefined`.
 - **Biome formatting:** single quotes, double quotes in JSX, semicolons, trailing commas, 2-space indent, 100-column lines.
 - **`AbortSignal.timeout()` does not exist in React Native.** RN polyfills `AbortSignal` with `abort-controller@3.0.0`, which has no static `timeout()`. It *does* exist under Jest's Node environment — so using it passes every test and crashes the app. Use `AbortController` + `setTimeout`.
+- **Use `globalThis`, never the bare `global`, in tests.** `global` is declared by `@types/node`, and this project deliberately keeps `types: ["jest"]`: adding Node's ambient types to a React Native app makes `Buffer`, `process` and `fs` type-check against a Hermes runtime that has none of them, and retypes `setTimeout`'s return as `NodeJS.Timeout`. `globalThis` is ES2020 and needs no ambient package.
 - **API error codes are contract; API error `message` is not.** Branch on `code`; never render `message` raw.
 - **Every task ends green** on `pnpm check` (typecheck + lint) and `pnpm test:ci`, and ends with a commit.
 
@@ -407,7 +408,7 @@ const mockFetch = jest.fn();
 
 beforeEach(() => {
   mockFetch.mockReset();
-  global.fetch = mockFetch as unknown as typeof fetch;
+  globalThis.fetch = mockFetch as unknown as typeof fetch;
   configureAuthorization(null);
 });
 
