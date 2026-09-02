@@ -9,6 +9,9 @@ export const PASSWORD_POLICY_PATTERN = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]
 /** Presence only, as on the server: see `signInSchema` below. */
 const MIN_SUBMITTED_PASSWORD_LENGTH = 1;
 
+/** Presence, not shape: the client has no business asserting JWT structure. */
+const MIN_ACCESS_TOKEN_LENGTH = 1;
+
 /**
  * Rendered straight to the user by react-hook-form, so these are copy, not
  * diagnostics: zod's defaults read like "Too small: expected string to have
@@ -54,7 +57,9 @@ export const signInSchema = z.object({
 
 export const registerResponseSchema = z.object({ id: z.uuid() });
 
-export const loginResponseSchema = z.object({ accessToken: z.string().min(MIN_PASSWORD_LENGTH) });
+export const loginResponseSchema = z.object({
+  accessToken: z.string().min(MIN_ACCESS_TOKEN_LENGTH),
+});
 
 /**
  * Dates stay ISO strings — nothing formats or compares one yet, so converting

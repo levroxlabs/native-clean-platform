@@ -45,6 +45,14 @@ describe('login', () => {
       body: CREDENTIALS,
     });
   });
+
+  it('rejects an empty access token as a contract drift', async () => {
+    mockRequest.mockResolvedValue({ accessToken: '' });
+
+    await expect(login(CREDENTIALS)).rejects.toMatchObject({
+      code: API_ERROR_CODES.UNEXPECTED_RESPONSE,
+    });
+  });
 });
 
 describe('fetchMe', () => {
