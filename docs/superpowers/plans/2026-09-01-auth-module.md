@@ -27,6 +27,7 @@ Every task's requirements implicitly include this section. Values are copied ver
 - **Use `globalThis`, never the bare `global`, in tests.** `global` is declared by `@types/node`, and this project deliberately keeps `types: ["jest"]`: adding Node's ambient types to a React Native app makes `Buffer`, `process` and `fs` type-check against a Hermes runtime that has none of them, and retypes `setTimeout`'s return as `NodeJS.Timeout`. `globalThis` is ES2020 and needs no ambient package.
 - **Emptying the query cache schedules no render.** `removeQueries()` and `clear()` are not React state changes. If a component has already re-rendered before the cache is emptied — which is what happens when a handler updates state, `await`s, and only then clears — nothing re-renders it afterwards, and `useQuery` keeps serving the data it last delivered. Derive session-scoped values from state (the token), never straight from the cache.
 - **API error codes are contract; API error `message` is not.** Branch on `code`; never render `message` raw.
+- **Biome's `organizeImports` is an error, not a hint**, and it orders *exports* too. It sorts uppercase before lowercase (`./AuthContext` before `./api/authApi`), sorts named specifiers by name while ignoring the `type` modifier (`AUTH_STATUSES, type AuthContextValue, type AuthStatus`), and merges adjacent import groups that are only separated by a blank line. The snippets in this plan are **not** pre-sorted — run `pnpm lint:fix` after pasting one, before `pnpm check`.
 - **Every task ends green** on `pnpm check` (typecheck + lint) and `pnpm test:ci`, and ends with a commit.
 
 ---
@@ -1378,9 +1379,8 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
 
 import { API_ERROR_CODES, ApiError } from '@/services/http';
-
-import { fetchMe, login, register } from './api/authApi';
 import { AuthProvider } from './AuthProvider';
+import { fetchMe, login, register } from './api/authApi';
 import { useAuth } from './hooks/useAuth';
 import { clearAccessToken, readAccessToken, writeAccessToken } from './storage';
 
@@ -1557,13 +1557,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { API_ERROR_CODES, ApiError, configureAuthorization } from '@/services/http';
-
+import { AuthContext } from './AuthContext';
 import { fetchMe, login, register } from './api/authApi';
 import type { Credentials, User } from './api/schemas';
-import { AuthContext } from './AuthContext';
 import { AUTH_QUERY_KEYS } from './constants';
 import { clearAccessToken, readAccessToken, writeAccessToken } from './storage';
-import { type AuthContextValue, AUTH_STATUSES, type AuthStatus } from './types';
+import { AUTH_STATUSES, type AuthContextValue, type AuthStatus } from './types';
 
 /** A rejected token will be rejected again; retrying only delays the boot. */
 const ME_RETRY_COUNT = 0;
@@ -1756,10 +1755,10 @@ Expected: PASS, 7 tests.
 `src/modules/auth/index.ts` — everything the app is allowed to reach. The navigation exports are added in Task 7, when the files exist:
 
 ```ts
-export type { Credentials, User } from './api/schemas';
 export { AuthProvider } from './AuthProvider';
+export type { Credentials, User } from './api/schemas';
 export { useAuth } from './hooks/useAuth';
-export { type AuthContextValue, AUTH_STATUSES, type AuthStatus } from './types';
+export { AUTH_STATUSES, type AuthContextValue, type AuthStatus } from './types';
 ```
 
 - [ ] **Step 8: Wire the providers in `App.tsx`**
