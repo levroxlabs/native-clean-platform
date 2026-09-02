@@ -4,7 +4,7 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "allowJs": true,
-    "types": ["jest"],
+    "types": ["jest", "node"],
     "paths": {
       "@/*": ["./src/*"]
     }
