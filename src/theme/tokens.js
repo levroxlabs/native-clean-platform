@@ -61,6 +61,11 @@ const semanticColors = {
   'content-inverse': colors.neutral[0],
   primary: colors.brand[500],
   'primary-pressed': colors.brand[600],
+  // `tailwind.config.js` spreads these over `colors`, so this alias shadows the
+  // raw `danger` scale: `text-danger` resolves here, `text-danger-500` no
+  // longer resolves at all. That is the intent of rule 6 in AGENTS.md.
+  danger: colors.danger[600],
+  'danger-surface': colors.danger[50],
 };
 
 /**

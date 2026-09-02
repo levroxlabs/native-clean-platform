@@ -11,7 +11,7 @@ propositalmente CommonJS: o mesmo arquivo alimenta o `tailwind.config.js`
 | Name             | Description                                                          |
 | ---------------- | ---------------------------------------------------------------------- |
 | `colors`         | Escalas brutas: `brand` e `neutral` (50→950), mais `success`, `warning`, `danger`, `info`. |
-| `semanticColors` | Aliases por papel: `background`, `surface`, `content`, `primary`, `border`, … |
+| `semanticColors` | Aliases por papel: `background`, `surface`, `content`, `primary`, `border`, `danger`, … |
 | `spacing`        | Grid de 4pt, como strings CSS.                                        |
 | `typography`     | `fontFamily`, `fontSize` (com line heights), `fontWeight`.            |
 | `radius`         | Escala de border radius.                                              |
@@ -38,6 +38,10 @@ propositalmente CommonJS: o mesmo arquivo alimenta o `tailwind.config.js`
   de gráficos.
 - Prefira `semanticColors` a `colors` para que dark mode e rebranding fiquem
   em um único lugar.
+- Um alias com o mesmo nome de uma escala sombreia a escala inteira no Tailwind,
+  porque o `tailwind.config.js` espalha `semanticColors` depois de `colors`. É o
+  caso de `danger`: `bg-danger` e `bg-danger-surface` existem, `bg-danger-500`
+  não. Escolha o nome do alias com isso em mente.
 
 ## Adapting to a new app
 
