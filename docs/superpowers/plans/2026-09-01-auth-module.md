@@ -25,6 +25,7 @@ Every task's requirements implicitly include this section. Values are copied ver
 - **Biome formatting:** single quotes, double quotes in JSX, semicolons, trailing commas, 2-space indent, 100-column lines.
 - **`AbortSignal.timeout()` does not exist in React Native.** RN polyfills `AbortSignal` with `abort-controller@3.0.0`, which has no static `timeout()`. It *does* exist under Jest's Node environment — so using it passes every test and crashes the app. Use `AbortController` + `setTimeout`.
 - **Use `globalThis`, never the bare `global`, in tests.** `global` is declared by `@types/node`, and this project deliberately keeps `types: ["jest"]`: adding Node's ambient types to a React Native app makes `Buffer`, `process` and `fs` type-check against a Hermes runtime that has none of them, and retypes `setTimeout`'s return as `NodeJS.Timeout`. `globalThis` is ES2020 and needs no ambient package.
+- **Emptying the query cache schedules no render.** `removeQueries()` and `clear()` are not React state changes. If a component has already re-rendered before the cache is emptied — which is what happens when a handler updates state, `await`s, and only then clears — nothing re-renders it afterwards, and `useQuery` keeps serving the data it last delivered. Derive session-scoped values from state (the token), never straight from the cache.
 - **API error codes are contract; API error `message` is not.** Branch on `code`; never render `message` raw.
 - **Every task ends green** on `pnpm check` (typecheck + lint) and `pnpm test:ci`, and ends with a commit.
 
@@ -1570,7 +1571,7 @@ const ME_RETRY_COUNT = 0;
 interface StatusInput {
   hasCompletedBoot: boolean;
   token: string | null;
-  user: User | undefined;
+  user: User | null;
 }
 
 /**
@@ -1580,7 +1581,7 @@ interface StatusInput {
  */
 const resolveStatus = ({ hasCompletedBoot, token, user }: StatusInput): AuthStatus => {
   if (!hasCompletedBoot) return AUTH_STATUSES.LOADING;
-  if (token === null || user === undefined) return AUTH_STATUSES.SIGNED_OUT;
+  if (token === null || user === null) return AUTH_STATUSES.SIGNED_OUT;
 
   return AUTH_STATUSES.SIGNED_IN;
 };
@@ -1690,10 +1691,16 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     queryClient.clear();
   }, [endSession, queryClient]);
 
+  // Gated on the token rather than read straight off the query: `endSession`
+  // empties the cache outside React's render cycle, and an emptied cache
+  // schedules no render, so `meQuery.data` would keep serving the profile of
+  // the user who just signed out. The token is state, so losing it does render.
+  const user = token === null ? null : (meQuery.data ?? null);
+
   const value = useMemo<AuthContextValue>(
     () => ({
-      status: resolveStatus({ hasCompletedBoot, token, user: meQuery.data }),
-      user: meQuery.data ?? null,
+      status: resolveStatus({ hasCompletedBoot, token, user }),
+      user,
       signIn: signInMutation.mutateAsync,
       signUp: signUpMutation.mutateAsync,
       signOut,
@@ -1702,7 +1709,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     [
       hasCompletedBoot,
       token,
-      meQuery.data,
+      user,
       signInMutation.mutateAsync,
       signInMutation.isPending,
       signUpMutation.mutateAsync,
