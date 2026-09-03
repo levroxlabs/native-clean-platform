@@ -473,7 +473,7 @@ git commit -m "feat: share the error copy map across modules"
 - Consumes: nothing from earlier tasks.
 - Produces: `ErrorBoundary` — a component taking only `children`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/errors/ErrorBoundary.test.tsx`:
 
@@ -549,12 +549,12 @@ describe('ErrorBoundary', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and confirm it fails**
+- [x] **Step 2: Run it and confirm it fails**
 
 Run: `pnpm exec jest --ci src/errors/ErrorBoundary.test.tsx`
 Expected: FAIL — `Cannot find module './ErrorBoundary'`.
 
-- [ ] **Step 3: Implement `src/errors/ErrorBoundary.tsx`**
+- [x] **Step 3: Implement `src/errors/ErrorBoundary.tsx`**
 
 ```tsx
 import { Component, type PropsWithChildren } from 'react';
@@ -611,12 +611,12 @@ export class ErrorBoundary extends Component<PropsWithChildren, ErrorBoundarySta
 }
 ```
 
-- [ ] **Step 4: Run the test and confirm it passes**
+- [x] **Step 4: Run the test and confirm it passes**
 
 Run: `pnpm exec jest --ci src/errors/ErrorBoundary.test.tsx`
 Expected: PASS, 3 tests.
 
-- [ ] **Step 5: Export it**
+- [x] **Step 5: Export it**
 
 Add to `src/errors/index.ts`:
 
@@ -624,7 +624,7 @@ Add to `src/errors/index.ts`:
 export { ErrorBoundary } from './ErrorBoundary';
 ```
 
-- [ ] **Step 6: Record the exception in `AGENTS.md`**
+- [x] **Step 6: Record the exception in `AGENTS.md`**
 
 In Rule 2, after the paragraph explaining that Biome enforces arrow components, add:
 
@@ -634,7 +634,7 @@ Two exceptions, both because `instanceof` or React itself requires a class:
 `getDerivedStateFromError` has no hook equivalent in any released React.
 ```
 
-- [ ] **Step 7: Verify and commit**
+- [x] **Step 7: Verify and commit**
 
 ```bash
 pnpm lint:fix && pnpm check && pnpm test:ci

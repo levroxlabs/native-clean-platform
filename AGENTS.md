@@ -45,6 +45,10 @@ Biome enforces this for components (`useReactFunctionComponentDefinition`) and
 for function expressions (`useArrowFunction`). Plain function declarations are
 not machine-checked — hold the line in review.
 
+Two exceptions, both because `instanceof` or React itself requires a class:
+`ApiError` in `src/lib/api.ts`, and `ErrorBoundary` in `src/errors/`, whose
+`getDerivedStateFromError` has no hook equivalent in any released React.
+
 ## 3. Module README
 
 Every module (each folder under `src/`, and each module under `src/modules/`)
