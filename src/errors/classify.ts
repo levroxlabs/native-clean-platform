@@ -26,16 +26,25 @@ export const classifyError = (error: unknown): ErrorKind => {
   if (!(error instanceof ApiError)) return ERROR_KINDS.UNEXPECTED;
 
   if (error.code === API_ERROR_CODES.NETWORK_ERROR) return ERROR_KINDS.OFFLINE;
-  if (error.code === API_ERROR_CODES.UNEXPECTED_RESPONSE) return ERROR_KINDS.UNEXPECTED;
 
-  // Session before the 4xx range, and by code rather than by status: a wrong
-  // password is a 401 too, and it is input the user can correct, not a session
-  // that ended.
+  // Status before the UNEXPECTED_RESPONSE code: the client (src/lib/api.ts)
+  // throws that code for ANY status whose body isn't the expected envelope,
+  // including a 502/503 with an HTML body from a proxy. That is still a server
+  // problem worth retrying, so a 5xx must win over the code.
+  if (error.status >= LOWEST_SERVER_ERROR_STATUS) return ERROR_KINDS.SERVER;
+
+  // Session before the rest of the 4xx range, and by code rather than by
+  // status: a wrong password is a 401 too, and it is input the user can
+  // correct, not a session that ended.
   if (error.status === UNAUTHORIZED_STATUS && error.code === API_ERROR_CODES.INVALID_ACCESS_TOKEN) {
     return ERROR_KINDS.SESSION;
   }
 
-  if (error.status >= LOWEST_SERVER_ERROR_STATUS) return ERROR_KINDS.SERVER;
+  // A genuine contract drift — a 2xx (or non-5xx) body that isn't what was
+  // asked for — stays unexpected rather than falling into the 4xx catch-all
+  // below: retrying it would not fix a schema mismatch.
+  if (error.code === API_ERROR_CODES.UNEXPECTED_RESPONSE) return ERROR_KINDS.UNEXPECTED;
+
   if (error.status >= LOWEST_CLIENT_ERROR_STATUS) return ERROR_KINDS.INPUT;
 
   return ERROR_KINDS.UNEXPECTED;
