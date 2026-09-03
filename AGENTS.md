@@ -91,8 +91,8 @@ closed set of options.
   which does not erase cleanly and adds runtime weight:
 
   ```ts
-  export const ROUTES = { WELCOME: 'Welcome', HOME: 'Home' } as const;
-  export type Route = (typeof ROUTES)[keyof typeof ROUTES];
+  export const AUTH_STATUSES = { LOADING: 'loading', SIGNED_IN: 'signedIn' } as const;
+  export type AuthStatus = (typeof AUTH_STATUSES)[keyof typeof AUTH_STATUSES];
   ```
 
 - Keep a constant next to where it is used. Promote it to the module's
@@ -103,11 +103,12 @@ closed set of options.
 
 | Extract into a constant                                                 | Leave inline                                            |
 | ----------------------------------------------------------------------- | ------------------------------------------------------- |
-| Route names, storage keys, API paths, header names, HTTP status codes    | Tailwind class strings in `className` — that is the styling language, not data |
+| Storage keys, header names, HTTP status codes                            | Tailwind class strings in `className` — that is the styling language, not data |
 | User-facing copy (labels, titles, error messages) — see below            | `0`, `1`, `-1` used as identity, empty, or "not found"   |
 | Animation durations, debounce delays, retry counts, timeouts, page sizes | `flex: 1` and equivalents in a `StyleSheet`              |
 | Layout values used outside Tailwind (`hitSlop`, `snapToInterval`)        | Numbers that are already inside a named token in `src/theme/tokens.js` |
-| Test IDs and accessibility identifiers                                  |                                                          |
+| Test IDs and accessibility identifiers                                  | **Route names** — write `<Stack.Screen name="SignIn">` and `navigate('SignIn')`. The param list in `types.ts` is the single declaration, and `tsc` rejects a name that is not in it |
+|                                                                          | **API paths** — write `request('/auth/login', …)`. The path appears once, in the function that owns that endpoint |
 
 **User-facing copy** lives in a `COPY` object per screen or component, colocated
 with it. This keeps the JSX readable and gives i18n a single seam to replace
@@ -139,8 +140,9 @@ folder map.
   exports.
 - A component moves out of `modules/<x>/` into `src/components/` only once a
   second module needs it.
-- `src/services/` knows nothing about React. Hooks and Contexts live in
-  `src/hooks/` or inside the module that owns them.
+- `src/lib/` knows nothing about React. Hooks and Contexts live in
+  `src/hooks/` or inside the module that owns them — a module's contexts go in
+  its own `context/` folder, and its form schemas in `validations/`.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md), section 2, for the full folder tree
 as it exists today and the module-boundary table.
@@ -169,12 +171,17 @@ pnpm settings live in `pnpm-workspace.yaml`, not `.npmrc` — pnpm 11 no longer
 reads `.npmrc`. `nodeLinker: hoisted` is required: Metro cannot resolve through
 pnpm's symlinked `node_modules`.
 
-Two deliberate exceptions in `biome.json`:
+Three deliberate exceptions in `biome.json`:
 
 - `useNamingConvention` is off for `src/theme/tokens.js`. Keys like `0.5`,
   `2xl`, and `DEFAULT` are dictated by Tailwind, not chosen by us.
 - `noUnknownAtRules` is off for `.css` files, because `@tailwind` is not a
   standard at-rule.
+- `useNamingConvention` allows PascalCase `typeProperty` in `**/navigation/types.ts`.
+  Route names are PascalCase by React Navigation convention, and since they are
+  written inline (see [Rule 4](#4-no-magic-strings-or-numbers)) the param list
+  declares them as literal keys — `Home: undefined`, not `[APP_ROUTES.HOME]`.
+  The names come from the library's convention, not from us.
 
 Class sorting is not enforced: Biome's `useSortedClasses` is still a work in
 progress and does not understand custom utilities, so it would fight our tokens.

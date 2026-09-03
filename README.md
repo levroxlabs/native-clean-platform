@@ -4,8 +4,8 @@ Base reutilizável para apps React Native. **Isto não é um app finalizado** �
 o ponto de partida que outros projetos clonam.
 
 **Stack:** Expo SDK 57 (managed) · React Native 0.86 · TypeScript · NativeWind v4
-(Tailwind 3.4) · React Navigation 7 · TanStack Query 5 · react-hook-form + zod ·
-expo-secure-store · Biome · pnpm
+(Tailwind 3.4) · React Navigation 7 · TanStack Query 5 · axios ·
+react-hook-form + zod · expo-secure-store · Biome · pnpm
 
 **Status:** estrutura, ferramentas e convenções prontas, mais o módulo `auth`
 implementado contra os três endpoints de `/auth` de `api-clean-platform`:
@@ -81,7 +81,7 @@ src/
 Nada fora de um módulo importa um arquivo de dentro dele — só o que o
 `index.ts` exporta — e módulos não importam uns aos outros. Código
 compartilhado sobe para `src/components/` (a partir do segundo consumidor)
-ou para um módulo de topo como `src/hooks/`, `src/services/` ou
+ou para um módulo de topo como `src/hooks/`, `src/lib/` ou
 `src/store/`, criados apenas quando algo realmente precisar deles — veja
 [AGENTS.md](AGENTS.md) para o propósito de cada um.
 
@@ -168,7 +168,7 @@ deslogado.
       React Native Testing Library, infraestrutura de E2E com Maestro
       (sem flows ainda — veja `.maestro/README.md`).
 - [x] **Auth** — módulo em `src/modules/auth/` contra `api-clean-platform`:
-      cliente HTTP em `src/services/http/`, `useAuth()` / `AuthProvider`,
+      cliente HTTP (axios) em `src/lib/`, `useAuth()` / `AuthProvider`,
       token no `expo-secure-store`, telas de sign-in / sign-up com validação,
       e navegação condicional entre o stack logado e o deslogado. Refresh de
       token e logout no servidor ficam adiados até a API publicar os
