@@ -3,9 +3,11 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Pressable, Text, View } from 'react-native';
+import { copyForError } from '@/errors';
 import { FIELD_TYPES, FormTextField } from '../components/FormTextField';
 import { SubmitButton } from '../components/SubmitButton';
-import { applyServerFieldErrors, copyForError } from '../errorCopy';
+
+import { applyServerFieldErrors } from '../errorCopy';
 import { useAuth } from '../hooks/useAuth';
 import type { AuthStackParamList } from '../navigation/types';
 import { type Credentials, signInSchema } from '../validations';

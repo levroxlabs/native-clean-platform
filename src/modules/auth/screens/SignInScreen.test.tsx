@@ -1,6 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
+import { registerErrorCopy, resetErrorCopy } from '@/errors';
 import { API_ERROR_CODES, ApiError } from '@/lib';
+
+import { AUTH_ERROR_COPY } from '../errorCopy';
 
 import { useAuth } from '../hooks/useAuth';
 import { SignInScreen } from './SignInScreen';
@@ -22,6 +25,11 @@ const mockSignIn = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // The copy for this module's own codes lives behind a registration that
+  // App.tsx performs at boot. A screen rendered on its own has no composition
+  // root, so it registers the same map the app would.
+  resetErrorCopy();
+  registerErrorCopy(AUTH_ERROR_COPY);
   mockUseAuth.mockReturnValue({
     status: 'signedOut',
     user: null,

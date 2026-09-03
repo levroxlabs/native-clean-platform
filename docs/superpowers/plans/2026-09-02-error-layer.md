@@ -224,7 +224,7 @@ git commit -m "feat: classify errors by the decision they lead to"
 - Produces: `copyForError(error: unknown): string`, `registerErrorCopy(entries: Readonly<Record<string, string>>): void`, `resetErrorCopy(): void`, all from `src/errors/copy.ts`; and `AUTH_ERROR_COPY` exported from `@/modules/auth`.
 - Removes: `copyForError` from `src/modules/auth/errorCopy.ts`. `applyServerFieldErrors` stays there — it is the module that knows its fields are `email` and `password`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/errors/copy.test.ts`:
 
@@ -287,12 +287,12 @@ describe('copyForError', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and confirm it fails**
+- [x] **Step 2: Run it and confirm it fails**
 
 Run: `pnpm exec jest --ci src/errors/copy.test.ts`
 Expected: FAIL — `Cannot find module './copy'`.
 
-- [ ] **Step 3: Implement `src/errors/copy.ts`**
+- [x] **Step 3: Implement `src/errors/copy.ts`**
 
 ```ts
 import { API_ERROR_CODES, ApiError } from '@/lib';
@@ -342,12 +342,12 @@ export const copyForError = (error: unknown): string => {
 };
 ```
 
-- [ ] **Step 4: Run the test and confirm it passes**
+- [x] **Step 4: Run the test and confirm it passes**
 
 Run: `pnpm exec jest --ci src/errors/copy.test.ts`
 Expected: PASS, 7 tests.
 
-- [ ] **Step 5: Trim `src/modules/auth/errorCopy.ts` to the module's own codes**
+- [x] **Step 5: Trim `src/modules/auth/errorCopy.ts` to the module's own codes**
 
 Replace the whole file with:
 
@@ -400,7 +400,7 @@ export const applyServerFieldErrors = (
 };
 ```
 
-- [ ] **Step 6: Create `src/errors/index.ts`**
+- [x] **Step 6: Create `src/errors/index.ts`**
 
 The screens import from `@/errors` in the next step, so the entry point has to
 exist first.
@@ -412,7 +412,7 @@ export { copyForError, registerErrorCopy, resetErrorCopy } from './copy';
 
 Later tasks add to this file as they add exports.
 
-- [ ] **Step 7: Repoint the two screens**
+- [x] **Step 7: Repoint the two screens**
 
 In **both** `src/modules/auth/screens/SignInScreen.tsx` and `src/modules/auth/screens/SignUpScreen.tsx`, change the import of `copyForError` so it comes from the new home, leaving `applyServerFieldErrors` where it is:
 
@@ -424,7 +424,7 @@ import { applyServerFieldErrors } from '../errorCopy';
 
 The bodies of both screens are unchanged — `copyForError(error)` is called exactly as before.
 
-- [ ] **Step 8: Export the module's map**
+- [x] **Step 8: Export the module's map**
 
 Add to `src/modules/auth/index.ts`:
 
@@ -432,9 +432,26 @@ Add to `src/modules/auth/index.ts`:
 export { AUTH_ERROR_COPY } from './errorCopy';
 ```
 
-- [ ] **Step 9: Verify and commit**
+- [x] **Step 9: Verify and commit**
 
-The two screen tests already assert on the copy strings (`'Email or password is incorrect.'`, `'Something went wrong. Please try again.'`), so they are the proof this migration preserved behaviour. They must pass **without being edited**. If they fail, the copy moved but the wiring did not.
+The two screen tests already assert on the copy strings (`'Email or password is incorrect.'`, `'Something went wrong. Please try again.'`), so they are the proof this migration preserved behaviour — but they **do** need one edit each, and the reason matters.
+
+Domain copy now resolves through a registration that only `App.tsx` performs. A screen rendered on its own has no composition root, so its test must register the same map the app would:
+
+```tsx
+import { registerErrorCopy, resetErrorCopy } from '@/errors';
+
+import { AUTH_ERROR_COPY } from '../errorCopy';
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  resetErrorCopy();
+  registerErrorCopy(AUTH_ERROR_COPY);
+  // ...the existing useAuth mock
+});
+```
+
+This is the cost of decision D8, and it is worth naming: a module whose copy is never registered falls back to generic copy **silently**, in tests and in production alike. The integration test in Task 5 and this registration are what keep that honest.
 
 ```bash
 pnpm lint:fix && pnpm check && pnpm test:ci

@@ -1,6 +1,6 @@
 import type { UseFormSetError } from 'react-hook-form';
 
-import { API_ERROR_CODES, ApiError } from '@/lib';
+import { ApiError } from '@/lib';
 
 import type { Credentials } from './validations';
 
@@ -12,28 +12,16 @@ const FORM_FIELDS = {
 type FormField = (typeof FORM_FIELDS)[keyof typeof FORM_FIELDS];
 
 /**
- * `code` is the API's stable contract and doubles as the i18n key. `message` is
- * for logs and must never reach the screen, so every code the user can cause
- * gets copy here.
+ * This module's domain codes only. Everything a module can receive whatever it
+ * asked for — network, 500, drifted contract — lives in `@/errors`, and
+ * `App.tsx` registers this map there.
  */
-const COPY_BY_CODE: Readonly<Record<string, string>> = {
-  [API_ERROR_CODES.INVALID_CREDENTIALS]: 'Email or password is incorrect.',
-  [API_ERROR_CODES.EMAIL_ALREADY_IN_USE]: 'This email is already registered.',
-  [API_ERROR_CODES.VALIDATION_ERROR]: 'Please check the fields above.',
-  [API_ERROR_CODES.NETWORK_ERROR]: 'Could not reach the server. Check your connection.',
-  [API_ERROR_CODES.INTERNAL_SERVER_ERROR]: 'The server had a problem. Please try again.',
-};
-
-/** A code with no entry must never leave the screen silent. */
-const FALLBACK_COPY = 'Something went wrong. Please try again.';
+export const AUTH_ERROR_COPY = {
+  INVALID_CREDENTIALS: 'Email or password is incorrect.',
+  EMAIL_ALREADY_IN_USE: 'This email is already registered.',
+} as const;
 
 const SERVER_FIELD_MESSAGE = 'The server rejected this value.';
-
-export const copyForError = (error: unknown): string => {
-  if (!(error instanceof ApiError)) return FALLBACK_COPY;
-
-  return COPY_BY_CODE[error.code] ?? FALLBACK_COPY;
-};
 
 const isFormField = (field: string | undefined): field is FormField =>
   field === FORM_FIELDS.EMAIL || field === FORM_FIELDS.PASSWORD;
@@ -41,7 +29,8 @@ const isFormField = (field: string | undefined): field is FormField =>
 /**
  * Puts the API's per-field `details[]` where react-hook-form already renders
  * local errors, so server validation and client validation land in the same
- * place on the screen.
+ * place on the screen. It stays in this module because only this module knows
+ * its fields are `email` and `password`.
  */
 export const applyServerFieldErrors = (
   error: unknown,
