@@ -1,21 +1,9 @@
 import type { z } from 'zod';
 
-import {
-  API_ERROR_CODES,
-  ApiError,
-  CLIENT_FAILURE_STATUS,
-  HTTP_METHODS,
-  request,
-} from '@/services/http';
+import { API_ERROR_CODES, ApiError, CLIENT_FAILURE_STATUS, HTTP_METHODS, request } from '@/lib';
 
-import { AUTH_ENDPOINTS } from './endpoints';
-import {
-  type Credentials,
-  loginResponseSchema,
-  registerResponseSchema,
-  type User,
-  userSchema,
-} from './schemas';
+import type { Credentials } from '../validations';
+import { loginResponseSchema, registerResponseSchema, type User, userSchema } from './schemas';
 
 const CONTRACT_DRIFT_MESSAGE = 'The API response did not match the expected shape:';
 
@@ -43,7 +31,7 @@ const parseOrThrow = <TSchema extends z.ZodType>(
 
 /** Issues no session — the caller must log in afterwards. Returns the new id. */
 export const register = async (credentials: Credentials): Promise<string> => {
-  const payload = await request(AUTH_ENDPOINTS.REGISTER, {
+  const payload = await request('/auth/register', {
     method: HTTP_METHODS.POST,
     body: credentials,
   });
@@ -52,7 +40,7 @@ export const register = async (credentials: Credentials): Promise<string> => {
 };
 
 export const login = async (credentials: Credentials): Promise<string> => {
-  const payload = await request(AUTH_ENDPOINTS.LOGIN, {
+  const payload = await request('/auth/login', {
     method: HTTP_METHODS.POST,
     body: credentials,
   });
@@ -62,7 +50,7 @@ export const login = async (credentials: Credentials): Promise<string> => {
 
 /** The only way the API offers to tell whether a stored token still verifies. */
 export const fetchMe = async (): Promise<User> => {
-  const payload = await request(AUTH_ENDPOINTS.ME);
+  const payload = await request('/auth/me');
 
   return parseOrThrow(userSchema, payload);
 };

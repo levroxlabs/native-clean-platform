@@ -36,15 +36,22 @@
             "strictCase": false,
             "conventions": [
               {
-                "selector": { "kind": "typeLike" },
+                "selector": {
+                  "kind": "typeLike"
+                },
                 "formats": ["PascalCase"]
               },
               {
-                "selector": { "kind": "variable", "scope": "global" },
+                "selector": {
+                  "kind": "variable",
+                  "scope": "global"
+                },
                 "formats": ["CONSTANT_CASE", "camelCase", "PascalCase"]
               },
               {
-                "selector": { "kind": "objectLiteralProperty" },
+                "selector": {
+                  "kind": "objectLiteralProperty"
+                },
                 "formats": ["CONSTANT_CASE", "camelCase", "PascalCase"]
               }
             ]
@@ -54,7 +61,9 @@
       "nursery": {
         "useReactFunctionComponentDefinition": {
           "level": "error",
-          "options": { "namedComponents": "arrowFunction" }
+          "options": {
+            "namedComponents": "arrowFunction"
+          }
         }
       }
     }
@@ -95,6 +104,48 @@
         "rules": {
           "style": {
             "noMagicNumbers": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/navigation/types.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useNamingConvention": {
+              "level": "error",
+              "options": {
+                "strictCase": false,
+                "conventions": [
+                  {
+                    "selector": {
+                      "kind": "typeProperty"
+                    },
+                    "formats": ["PascalCase", "camelCase"]
+                  },
+                  {
+                    "selector": {
+                      "kind": "typeLike"
+                    },
+                    "formats": ["PascalCase"]
+                  },
+                  {
+                    "selector": {
+                      "kind": "variable",
+                      "scope": "global"
+                    },
+                    "formats": ["CONSTANT_CASE", "camelCase", "PascalCase"]
+                  },
+                  {
+                    "selector": {
+                      "kind": "objectLiteralProperty"
+                    },
+                    "formats": ["CONSTANT_CASE", "camelCase", "PascalCase"]
+                  }
+                ]
+              }
+            }
           }
         }
       }

@@ -1,8 +1,10 @@
-# HTTP
+# Lib
 
-Cliente único de acesso à API. Toda chamada de rede do app passa por aqui, e
-todo erro sai daqui como `ApiError` — inclusive falha de rede e resposta fora
-do contrato, para que quem chama trate um tipo só.
+Integrações com o mundo externo que não pertencem a nenhum módulo. Hoje só a
+API. **Nada aqui conhece React** — sem hooks, sem contextos, sem componentes —
+e nada aqui conhece módulo de domínio: quando o cliente precisa de algo que só
+um módulo sabe (o token da sessão), ele expõe um ponto de registro e o módulo
+se registra nele.
 
 ## Functions
 
@@ -31,15 +33,23 @@ do contrato, para que quem chama trate um tipo só.
 
 ## Conventions
 
+- **É axios**, com `baseURL` e `timeout` na instância e dois interceptors: um
+  põe o bearer token, o outro traduz qualquer falha para `ApiError`. Toda
+  chamada de rede do app passa por `request()`.
+- **A instância `api` não é reexportada pelo `index.ts`.** Ela é exportada de
+  `api.ts` só para o teste colocado trocar o `defaults.adapter`; de fora da
+  pasta o único caminho é `request()`, então não dá para escapar do token nem
+  da tradução de erro.
 - **`code` é contrato; `message` não é.** Trate por `code`; a `message` serve
   para log e debug e nunca vai crua para a tela. Um `code` desconhecido cai na
   copy genérica da tela — por isso `ApiError.code` é `string`, não uma união.
 - **Um 401 só encerra a sessão quando o código é `INVALID_ACCESS_TOKEN`.** O
   401 de `/auth/login` significa senha errada, e deslogar ali seria destruir
   uma sessão que não existe.
-- **Nunca use `AbortSignal.timeout()`.** O React Native faz polyfill de
-  `AbortSignal` com `abort-controller@3`, que não tem o método estático. O Node
-  (e portanto o Jest) tem — então o erro passaria em todos os testes e quebraria
-  só no app. Use `AbortController` + `setTimeout`.
+- **Timeout e cancelamento são do axios**, não escritos à mão. Não use
+  `AbortSignal.timeout()` em lugar nenhum deste repo: o React Native faz
+  polyfill de `AbortSignal` com `abort-controller@3`, que não tem o método
+  estático, mas o Node (e portanto o Jest) tem — o erro passaria em todos os
+  testes e quebraria só no app.
 - `configureAuthorization` é o único ponto a mudar quando a API ganhar
   `POST /auth/refresh`.

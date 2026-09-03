@@ -8,9 +8,11 @@ superfície pública através de um `index.ts`.
 modules/<name>/
   api/          chamadas ao backend deste módulo
   components/   componentes específicos deste módulo
+  context/      os React Contexts deste módulo, cada um com seu provider
   hooks/        hooks específicos deste módulo
-  navigation/   rotas, tipos de parâmetro e o navigator deste módulo
+  navigation/   o navigator deste módulo e os tipos de parâmetro das suas rotas
   screens/      telas pertencentes a este módulo
+  validations/  schemas de validação dos formulários deste módulo
   constants.ts  constantes compartilhadas dentro do módulo
   types.ts
   index.ts      o ÚNICO ponto de entrada que outros módulos podem importar
@@ -29,8 +31,14 @@ modules/<name>/
   `index.ts` exporta.
 - Módulos não importam uns aos outros. Código compartilhado sobe para
   `src/components/` ou para um novo módulo de topo (`src/hooks/`,
-  `src/services/`) criado quando for realmente necessário.
+  `src/lib/`) criado quando for realmente necessário.
 - Um componente só sai de um módulo quando um **segundo** módulo precisa dele.
+- Um Context e o provider dele moram no **mesmo arquivo**, dentro de
+  `context/` — quem lê o context é só o hook, e quem preenche é só o provider.
+  Um segundo context do módulo ganha outro arquivo na mesma pasta.
+- `validations/` guarda os schemas dos **formulários** (zod, consumidos pelo
+  react-hook-form). Schema de resposta da API não é validação de formulário:
+  fica em `api/`, junto de quem parseia a resposta.
 - `components/` de um módulo começa flat (um arquivo por componente). Só vale
   a pena introduzir subpastas por categoria (`ui/`, `layout/`, `feedback/` —
   o mesmo padrão de `src/components/`) se o módulo crescer o bastante para

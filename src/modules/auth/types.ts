@@ -1,4 +1,5 @@
-import type { Credentials, User } from './api/schemas';
+import type { User } from './api/schemas';
+import type { Credentials } from './validations';
 
 export const AUTH_STATUSES = {
   LOADING: 'loading',

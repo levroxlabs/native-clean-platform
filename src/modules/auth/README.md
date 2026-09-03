@@ -22,7 +22,6 @@ Fala com os três endpoints de `/auth` da API (`api-clean-platform`).
 | Name            | Description                                                     |
 | --------------- | ----------------------------------------------------------------- |
 | `AUTH_STATUSES` | `loading` \| `signedOut` \| `signedIn`.                            |
-| `AUTH_ROUTES`   | Nomes das rotas deste módulo.                                      |
 
 ## Types
 
@@ -32,7 +31,7 @@ Fala com os três endpoints de `/auth` da API (`api-clean-platform`).
 | `AuthContextValue`   | O que `useAuth()` devolve.                              |
 | `User`               | Perfil de `/auth/me`. Datas são strings ISO.            |
 | `Credentials`        | `{ email, password }`.                                  |
-| `AuthStackParamList` | Parâmetros das rotas deste módulo.                      |
+| `AuthStackParamList` | Parâmetros das rotas deste módulo (`SignIn`, `SignUp`). |
 
 ## Conventions
 
@@ -53,6 +52,12 @@ Fala com os três endpoints de `/auth` da API (`api-clean-platform`).
   Estar offline no boot não é motivo para exigir a senha de novo no próximo.
 - **A `message` da API nunca vai para a tela.** A copy sai de `errorCopy.ts`,
   escolhida pelo `code`; código desconhecido cai na mensagem genérica.
+- **Os schemas ficam em duas pastas por propósito diferente.**
+  `validations/` valida o que o usuário digita (consumido pelo react-hook-form);
+  `api/schemas.ts` valida o que a API devolve. Só o segundo é contrato de rede.
+- **Nome de rota é literal**, aqui e no resto do app: `<Stack.Screen
+  name="SignIn">` e `navigation.navigate('SignUp')`. Quem declara os nomes é o
+  `AuthStackParamList`, e o `tsc` recusa qualquer nome fora dele.
 - `storage.web.ts` usa `localStorage`, que **não** é equivalente ao keychain —
   qualquer script da origem lê. O alvo web é conveniência de desenvolvimento,
   não superfície de produção.
@@ -61,5 +66,5 @@ Fala com os três endpoints de `/auth` da API (`api-clean-platform`).
 
 Refresh de token e logout no servidor: a API não tem os endpoints. Enquanto não
 tiver, um `401 INVALID_ACCESS_TOKEN` encerra a sessão e o logout é local. O
-único ponto a mudar é `configureAuthorization` em `src/services/http/` — o
+único ponto a mudar é `configureAuthorization` em `src/lib/` — o
 desenho está em `docs/superpowers/specs/2026-09-01-auth-module-design.md`, §9.

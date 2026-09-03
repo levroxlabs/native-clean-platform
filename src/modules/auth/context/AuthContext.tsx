@@ -1,13 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  type PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
-import { API_ERROR_CODES, ApiError, configureAuthorization } from '@/services/http';
-import { AuthContext } from './AuthContext';
-import { fetchMe, login, register } from './api/authApi';
-import type { Credentials, User } from './api/schemas';
-import { AUTH_QUERY_KEYS } from './constants';
-import { clearAccessToken, readAccessToken, writeAccessToken } from './storage';
-import { AUTH_STATUSES, type AuthContextValue, type AuthStatus } from './types';
+import { API_ERROR_CODES, ApiError, configureAuthorization } from '@/lib';
+import { fetchMe, login, register } from '../api/authApi';
+import type { User } from '../api/schemas';
+import { AUTH_QUERY_KEYS } from '../constants';
+import { clearAccessToken, readAccessToken, writeAccessToken } from '../storage';
+import { AUTH_STATUSES, type AuthContextValue, type AuthStatus } from '../types';
+import type { Credentials } from '../validations';
+
+/**
+ * Lives with its provider rather than in a file of its own: only `useAuth`
+ * reads it, and the provider is the only thing that can fill it. A second
+ * context in this module gets its own file in this folder.
+ */
+export const AuthContext = createContext<AuthContextValue | null>(null);
 
 /** A rejected token will be rejected again; retrying only delays the boot. */
 const ME_RETRY_COUNT = 0;

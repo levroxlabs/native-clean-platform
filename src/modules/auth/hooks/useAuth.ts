@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 
-import { AuthContext } from '../AuthContext';
+import { AuthContext } from '../context';
 import type { AuthContextValue } from '../types';
 
 const MISSING_PROVIDER_MESSAGE = 'useAuth was called outside of <AuthProvider>.';

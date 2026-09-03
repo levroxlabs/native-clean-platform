@@ -1,7 +1,7 @@
 # Utils
 
 Helpers puros, sem React e sem I/O. Se um helper precisa de estado, de um hook
-ou de rede, ele pertence a `src/hooks/` ou `src/services/` em vez daqui.
+ou de rede, ele pertence a `src/hooks/` ou `src/lib/` em vez daqui.
 
 ## Functions
 

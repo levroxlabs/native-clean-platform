@@ -2,13 +2,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
 
-import { API_ERROR_CODES, ApiError } from '@/services/http';
-import { AuthProvider } from './AuthProvider';
-import { fetchMe, login, register } from './api/authApi';
-import { useAuth } from './hooks/useAuth';
-import { clearAccessToken, readAccessToken, writeAccessToken } from './storage';
+import { API_ERROR_CODES, ApiError } from '@/lib';
+import { fetchMe, login, register } from '../api/authApi';
+import { useAuth } from '../hooks/useAuth';
+import { clearAccessToken, readAccessToken, writeAccessToken } from '../storage';
+import { AuthProvider } from './AuthContext';
 
-jest.mock('./api/authApi');
+jest.mock('../api/authApi');
 
 const mockFetchMe = fetchMe as jest.MockedFunction<typeof fetchMe>;
 const mockLogin = login as jest.MockedFunction<typeof login>;

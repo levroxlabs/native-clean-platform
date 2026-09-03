@@ -1,8 +1,8 @@
 import type { UseFormSetError } from 'react-hook-form';
 
-import { API_ERROR_CODES, ApiError } from '@/services/http';
+import { API_ERROR_CODES, ApiError } from '@/lib';
 
-import type { Credentials } from './api/schemas';
+import type { Credentials } from './validations';
 
 const FORM_FIELDS = {
   EMAIL: 'email',

@@ -1,10 +1,9 @@
-import { API_ERROR_CODES, HTTP_METHODS, request } from '@/services/http';
+import { API_ERROR_CODES, HTTP_METHODS, request } from '@/lib';
 
 import { fetchMe, login, register } from './authApi';
-import { AUTH_ENDPOINTS } from './endpoints';
 
-jest.mock('@/services/http', () => ({
-  ...jest.requireActual('@/services/http'),
+jest.mock('@/lib', () => ({
+  ...jest.requireActual('@/lib'),
   request: jest.fn(),
 }));
 
@@ -28,7 +27,7 @@ describe('register', () => {
     mockRequest.mockResolvedValue({ id: USER_ID });
 
     await expect(register(CREDENTIALS)).resolves.toBe(USER_ID);
-    expect(mockRequest).toHaveBeenCalledWith(AUTH_ENDPOINTS.REGISTER, {
+    expect(mockRequest).toHaveBeenCalledWith('/auth/register', {
       method: HTTP_METHODS.POST,
       body: CREDENTIALS,
     });
@@ -40,7 +39,7 @@ describe('login', () => {
     mockRequest.mockResolvedValue({ accessToken: 'a-signed-token' });
 
     await expect(login(CREDENTIALS)).resolves.toBe('a-signed-token');
-    expect(mockRequest).toHaveBeenCalledWith(AUTH_ENDPOINTS.LOGIN, {
+    expect(mockRequest).toHaveBeenCalledWith('/auth/login', {
       method: HTTP_METHODS.POST,
       body: CREDENTIALS,
     });
@@ -60,7 +59,7 @@ describe('fetchMe', () => {
     mockRequest.mockResolvedValue(PROFILE);
 
     await expect(fetchMe()).resolves.toEqual(PROFILE);
-    expect(mockRequest).toHaveBeenCalledWith(AUTH_ENDPOINTS.ME);
+    expect(mockRequest).toHaveBeenCalledWith('/auth/me');
   });
 
   it('throws an ApiError when the API drifts from the agreed shape', async () => {

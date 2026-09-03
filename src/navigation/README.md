@@ -15,32 +15,26 @@ Este módulo lista **módulos, não telas**: as telas de um módulo ficam no
 | `RootStack`     | Um `Stack.Screen` por módulo. Renderiza só o lado que a sessão escolhe. |
 | `AppStack`      | O shell logado. Adicione aqui as telas que não pertencem a um módulo. |
 
-## Constants
-
-| Name          | Description                                       |
-| ------------- | --------------------------------------------------- |
-| `ROOT_ROUTES` | Um nome por módulo, mais o shell logado.             |
-| `APP_ROUTES`  | Nomes de rota do `AppStack`.                         |
-
 ## Types
 
 | Name                 | Description                                                          |
 | -------------------- | ---------------------------------------------------------------------- |
-| `RootStackParamList` | Parâmetros das rotas de topo. Registrado globalmente para que `navigate()` seja tipado em todo lugar. |
+| `RootStackParamList` | Parâmetros das rotas de topo (`Auth`, `App`). Registrado globalmente para que `navigate()` seja tipado em todo lugar. |
 | `AppStackParamList`  | Parâmetros de cada rota em `AppStack`.                                |
-| `RootRoute`          | União derivada de `ROOT_ROUTES`.                                      |
-| `AppRoute`           | União derivada de `APP_ROUTES`.                                       |
 
 ## Conventions
 
-- Nomes de rota nunca são literais de string no local de chamada. Use as
-  constantes: `navigation.navigate(APP_ROUTES.HOME)`.
-- Adicionar uma tela significa três edições **dentro do trio do módulo dono
-  dela**: uma rota em `constants.ts`, uma entrada na lista de parâmetros em
-  `types.ts`, e um `Stack.Screen` no navigator. O TypeScript quebra o build se
-  você esquecer alguma.
-- `NavigatorScreenParams` é o que mantém um `navigate(ROOT_ROUTES.APP, { screen:
-  APP_ROUTES.HOME })` tipado. Sem ele o `screen` aninhado não é verificado.
+- Nomes de rota são **literais**: `<Stack.Screen name="Home">` e
+  `navigation.navigate('Home')`. Não há objeto de constantes — a lista de
+  parâmetros em `types.ts` é a única declaração de cada nome, e o `tsc` recusa
+  qualquer nome que não esteja nela.
+- Adicionar uma tela significa duas edições **dentro do par do módulo dono
+  dela**: uma entrada na lista de parâmetros em `types.ts` e um `Stack.Screen`
+  no navigator. Esquecer a primeira quebra o build.
+- Nome de rota é PascalCase, por convenção do React Navigation. É por isso que
+  o `biome.json` libera `typeProperty` em PascalCase para `**/navigation/types.ts`.
+- `NavigatorScreenParams` é o que mantém um `navigate('App', { screen: 'Home' })`
+  tipado. Sem ele o `screen` aninhado não é verificado.
 
 ## Current state
 
@@ -52,5 +46,5 @@ quando logado. Renderizar só um lado — em vez de registrar os dois e navegar 
 logada depois do logout.
 
 Este módulo lista **módulos, não telas**. Adicionar uma tela a um módulo toca
-apenas o `navigation/` daquele módulo. Adicionar um módulo novo toca o trio
-dele mais uma linha em cada um dos três arquivos daqui.
+apenas o `navigation/` daquele módulo. Adicionar um módulo novo toca o
+`navigation/` dele mais uma linha aqui em `types.ts` e outra em `RootStack.tsx`.

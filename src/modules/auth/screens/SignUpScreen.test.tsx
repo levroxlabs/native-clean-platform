@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
-import { API_ERROR_CODES, ApiError } from '@/services/http';
+import { API_ERROR_CODES, ApiError } from '@/lib';
 
 import { useAuth } from '../hooks/useAuth';
 import { SignUpScreen } from './SignUpScreen';

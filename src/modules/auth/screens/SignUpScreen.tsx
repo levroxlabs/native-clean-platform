@@ -3,14 +3,12 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Pressable, Text, View } from 'react-native';
-
-import { type Credentials, signUpSchema } from '../api/schemas';
 import { FIELD_TYPES, FormTextField } from '../components/FormTextField';
 import { SubmitButton } from '../components/SubmitButton';
 import { applyServerFieldErrors, copyForError } from '../errorCopy';
 import { useAuth } from '../hooks/useAuth';
-import { AUTH_ROUTES } from '../navigation/constants';
 import type { AuthStackParamList } from '../navigation/types';
+import { type Credentials, signUpSchema } from '../validations';
 
 const COPY = {
   title: 'Create your account',
@@ -23,7 +21,7 @@ const COPY = {
 
 const EMPTY_FORM: Credentials = { email: '', password: '' };
 
-type SignUpScreenProps = NativeStackScreenProps<AuthStackParamList, typeof AUTH_ROUTES.SIGN_UP>;
+type SignUpScreenProps = NativeStackScreenProps<AuthStackParamList, 'SignUp'>;
 
 export const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
   const { signUp, isSubmitting } = useAuth();
@@ -70,10 +68,7 @@ export const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
 
       <SubmitButton isPending={isSubmitting} label={COPY.submitLabel} onPress={submit} />
 
-      <Pressable
-        className="mt-4 items-center"
-        onPress={() => navigation.navigate(AUTH_ROUTES.SIGN_IN)}
-      >
+      <Pressable className="mt-4 items-center" onPress={() => navigation.navigate('SignIn')}>
         <Text className="text-sm text-primary">{COPY.switchToSignIn}</Text>
       </Pressable>
     </View>

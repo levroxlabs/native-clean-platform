@@ -11,7 +11,7 @@ importadas pelo stack.
 
 | Name         | Route             | Description                                              |
 | ------------ | ----------------- | ---------------------------------------------------------- |
-| `HomeScreen` | `APP_ROUTES.HOME` | Tela inicial com um texto centralizado. |
+| `HomeScreen` | `Home` | Tela inicial com um texto centralizado. |
 
 ## Conventions
 
