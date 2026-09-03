@@ -41,6 +41,26 @@ describe('classifyError', () => {
     );
   });
 
+  it('calls a rejected refresh token a session error', () => {
+    expect(classifyError(apiError(401, API_ERROR_CODES.INVALID_REFRESH_TOKEN))).toBe(
+      ERROR_KINDS.SESSION,
+    );
+  });
+
+  it('calls a reused refresh token a session error', () => {
+    // The API has already revoked the whole family by the time this arrives:
+    // there is nothing to correct and nothing to retry.
+    expect(classifyError(apiError(401, API_ERROR_CODES.REFRESH_TOKEN_REUSED))).toBe(
+      ERROR_KINDS.SESSION,
+    );
+  });
+
+  it('calls a transaction conflict a server error, since it arrives as a 503', () => {
+    expect(classifyError(apiError(503, API_ERROR_CODES.TRANSACTION_CONFLICT))).toBe(
+      ERROR_KINDS.SERVER,
+    );
+  });
+
   it('calls a drifted contract unexpected', () => {
     expect(classifyError(apiError(200, API_ERROR_CODES.UNEXPECTED_RESPONSE))).toBe(
       ERROR_KINDS.UNEXPECTED,
@@ -72,6 +92,10 @@ describe('isRetryable', () => {
   it('retries what a second attempt could fix', () => {
     expect(isRetryable(apiError(0, API_ERROR_CODES.NETWORK_ERROR))).toBe(true);
     expect(isRetryable(apiError(503, API_ERROR_CODES.INTERNAL_SERVER_ERROR))).toBe(true);
+  });
+
+  it('retries a transaction conflict, which is transient by construction', () => {
+    expect(isRetryable(apiError(503, API_ERROR_CODES.TRANSACTION_CONFLICT))).toBe(true);
   });
 
   it('does not retry what a second attempt cannot fix', () => {

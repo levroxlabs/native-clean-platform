@@ -14,7 +14,7 @@ import { fetchMe, login, register } from '../api/authApi';
 import { AUTH_QUERY_KEYS } from '../constants';
 import { clearAccessToken, readAccessToken, writeAccessToken } from '../storage';
 import type { AuthContextValue } from '../types';
-import { isRejectedToken, resolveStatus } from '../utils/session';
+import { isEndedSession, resolveStatus } from '../utils/session';
 import type { Credentials } from '../validations';
 
 /**
@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   // token, though: being offline at launch is no reason to make the user type
   // their password again on the next one.
   useEffect(() => {
-    if (tokenRef.current !== null && isRejectedToken(meQuery.error)) void endSession();
+    if (tokenRef.current !== null && isEndedSession(meQuery.error)) void endSession();
   }, [meQuery.error, endSession]);
 
   const establishSession = useCallback(

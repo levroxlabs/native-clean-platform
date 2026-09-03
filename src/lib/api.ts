@@ -34,6 +34,15 @@ export const API_ERROR_CODES = {
   USER_NOT_FOUND: 'USER_NOT_FOUND',
   INVALID_EMAIL: 'INVALID_EMAIL',
   INVALID_PASSWORD: 'INVALID_PASSWORD',
+  /** The refresh token is unknown, expired, or was not presented at all. */
+  INVALID_REFRESH_TOKEN: 'INVALID_REFRESH_TOKEN',
+  /**
+   * A spent refresh token came back outside the API's 30-second grace window.
+   * The whole session family is already revoked by the time this arrives.
+   */
+  REFRESH_TOKEN_REUSED: 'REFRESH_TOKEN_REUSED',
+  /** A database conflict that survived the API's own retries. Arrives as a 503. */
+  TRANSACTION_CONFLICT: 'TRANSACTION_CONFLICT',
   /** Client-side: the request never reached the API. */
   NETWORK_ERROR: 'NETWORK_ERROR',
   /** Client-side: the API answered something that is not the agreed shape. */

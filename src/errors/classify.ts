@@ -22,6 +22,17 @@ const LOWEST_SERVER_ERROR_STATUS = 500;
 /** Retries *after* the original call, so one: two network attempts in total. */
 const MAX_RETRY_ATTEMPTS = 1;
 
+/**
+ * The 401s that mean the session is over. A wrong password is a 401 too, and it
+ * is input the user can correct — which is why this is a code set and not a
+ * status check.
+ */
+const SESSION_ERROR_CODES: readonly string[] = [
+  API_ERROR_CODES.INVALID_ACCESS_TOKEN,
+  API_ERROR_CODES.INVALID_REFRESH_TOKEN,
+  API_ERROR_CODES.REFRESH_TOKEN_REUSED,
+];
+
 export const classifyError = (error: unknown): ErrorKind => {
   if (!(error instanceof ApiError)) return ERROR_KINDS.UNEXPECTED;
 
@@ -36,7 +47,7 @@ export const classifyError = (error: unknown): ErrorKind => {
   // Session before the rest of the 4xx range, and by code rather than by
   // status: a wrong password is a 401 too, and it is input the user can
   // correct, not a session that ended.
-  if (error.status === UNAUTHORIZED_STATUS && error.code === API_ERROR_CODES.INVALID_ACCESS_TOKEN) {
+  if (error.status === UNAUTHORIZED_STATUS && SESSION_ERROR_CODES.includes(error.code)) {
     return ERROR_KINDS.SESSION;
   }
 

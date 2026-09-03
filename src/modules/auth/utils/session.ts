@@ -1,4 +1,4 @@
-import { API_ERROR_CODES, ApiError } from '@/lib';
+import { classifyError, ERROR_KINDS } from '@/errors';
 
 import type { User } from '../api/schemas';
 import { AUTH_STATUSES, type AuthStatus } from '../types';
@@ -21,5 +21,11 @@ export const resolveStatus = ({ hasCompletedBoot, token, user }: StatusInput): A
   return AUTH_STATUSES.SIGNED_IN;
 };
 
-export const isRejectedToken = (error: unknown): boolean =>
-  error instanceof ApiError && error.code === API_ERROR_CODES.INVALID_ACCESS_TOKEN;
+/**
+ * The session is over, as opposed to the request being wrong or the device
+ * being offline. Delegated to `classifyError` rather than listing the codes
+ * again: the error layer already owns "what kind of failure is this", and two
+ * lists of the same three codes would drift the day a fourth one lands.
+ */
+export const isEndedSession = (error: unknown): boolean =>
+  classifyError(error) === ERROR_KINDS.SESSION;

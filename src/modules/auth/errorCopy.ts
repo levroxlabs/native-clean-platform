@@ -19,6 +19,8 @@ type FormField = (typeof FORM_FIELDS)[keyof typeof FORM_FIELDS];
 export const AUTH_ERROR_COPY = {
   INVALID_CREDENTIALS: 'Email or password is incorrect.',
   EMAIL_ALREADY_IN_USE: 'This email is already registered.',
+  INVALID_REFRESH_TOKEN: 'Your session has expired. Please sign in again.',
+  REFRESH_TOKEN_REUSED: 'Your session was ended for security. Please sign in again.',
 } as const;
 
 const SERVER_FIELD_MESSAGE = 'The server rejected this value.';

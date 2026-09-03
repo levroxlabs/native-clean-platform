@@ -1,7 +1,7 @@
 import { API_ERROR_CODES, ApiError } from '@/lib';
 
 import { AUTH_STATUSES } from '../types';
-import { isRejectedToken, resolveStatus } from './session';
+import { isEndedSession, resolveStatus } from './session';
 
 describe('resolveStatus', () => {
   it('stays loading until boot completes, regardless of token or user', () => {
@@ -40,22 +40,31 @@ describe('resolveStatus', () => {
   });
 });
 
-describe('isRejectedToken', () => {
-  it('is true only for an ApiError with the rejected-access-token code', () => {
-    expect(
-      isRejectedToken(
-        new ApiError({
-          status: 401,
-          code: API_ERROR_CODES.INVALID_ACCESS_TOKEN,
-          message: 'Invalid or expired access token',
-        }),
-      ),
-    ).toBe(true);
+describe('isEndedSession', () => {
+  it.each([
+    API_ERROR_CODES.INVALID_ACCESS_TOKEN,
+    API_ERROR_CODES.INVALID_REFRESH_TOKEN,
+    API_ERROR_CODES.REFRESH_TOKEN_REUSED,
+  ])('is true for %s, which all mean the session is over', (code) => {
+    expect(isEndedSession(new ApiError({ status: 401, code, message: 'not contract' }))).toBe(true);
   });
 
-  it('is false for any other ApiError code', () => {
+  it('is false for a wrong password, which is a 401 the user can correct', () => {
     expect(
-      isRejectedToken(
+      isEndedSession(
+        new ApiError({
+          status: 401,
+          code: API_ERROR_CODES.INVALID_CREDENTIALS,
+          message: 'Invalid credentials',
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it('is false when the request never reached the API', () => {
+    // Being offline is not a reason to make the user type their password again.
+    expect(
+      isEndedSession(
         new ApiError({
           status: 0,
           code: API_ERROR_CODES.NETWORK_ERROR,
@@ -66,7 +75,7 @@ describe('isRejectedToken', () => {
   });
 
   it('is false for anything that is not an ApiError', () => {
-    expect(isRejectedToken(new TypeError('boom'))).toBe(false);
-    expect(isRejectedToken(null)).toBe(false);
+    expect(isEndedSession(new TypeError('boom'))).toBe(false);
+    expect(isEndedSession(null)).toBe(false);
   });
 });

@@ -13,6 +13,7 @@ const BASE_COPY: ErrorCopyMap = {
   [API_ERROR_CODES.UNEXPECTED_RESPONSE]: 'Something went wrong. Please try again.',
   [API_ERROR_CODES.BAD_REQUEST]: 'That request could not be processed.',
   [API_ERROR_CODES.ROUTE_NOT_FOUND]: 'That resource no longer exists.',
+  [API_ERROR_CODES.TRANSACTION_CONFLICT]: 'The server is busy. Please try again.',
 };
 
 /** A code with no entry must never leave the screen silent. */

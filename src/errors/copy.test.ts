@@ -17,6 +17,12 @@ describe('copyForError', () => {
     );
   });
 
+  it('phrases a transaction conflict as something to try again', () => {
+    expect(copyForError(apiError(API_ERROR_CODES.TRANSACTION_CONFLICT))).toBe(
+      'The server is busy. Please try again.',
+    );
+  });
+
   it('falls back for a code nobody registered', () => {
     expect(copyForError(apiError('A_CODE_SHIPPED_LATER'))).toBe(FALLBACK);
   });
