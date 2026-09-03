@@ -659,7 +659,7 @@ git commit -m "feat: stop a render error from taking down the app"
 
 **Note on the spec:** §D6 writes the seam as `configureErrorReporter({ showError })`. With a single callback the wrapper object buys nothing, so this takes the function directly. `configureAuthorization` takes an object because it carries two callbacks.
 
-- [ ] **Step 1: Write `src/errors/reporter.ts`**
+- [x] **Step 1: Write `src/errors/reporter.ts`**
 
 No test of its own — Task 5's integration test is what proves it, and a test of a two-line setter would only restate the setter.
 
@@ -684,12 +684,12 @@ export const reportError = (error: unknown): void => {
 };
 ```
 
-- [ ] **Step 2: Write the failing toast test**
+- [x] **Step 2: Write the failing toast test**
 
 Create `src/errors/ErrorToast.test.tsx`:
 
 ```tsx
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
 import { type Metrics, SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -795,7 +795,12 @@ describe('ErrorToastProvider', () => {
 
     await fireEvent.press(screen.getByText(OFFLINE_COPY));
 
-    expect(screen.queryByText(OFFLINE_COPY)).toBeNull();
+    // The message is removed by the fade-out's completion callback, not by the
+    // tap, so this has to wait for the animation rather than assert straight
+    // after the press.
+    await waitFor(() => {
+      expect(screen.queryByText(OFFLINE_COPY)).toBeNull();
+    });
   });
 
   it('registers itself as the reporter while mounted', async () => {
@@ -821,12 +826,12 @@ the throw statement itself, the same way `useAuth` is — asserting on a render
 that throws is brittle in the installed RNTL and would test the harness more
 than the hook.
 
-- [ ] **Step 3: Run it and confirm it fails**
+- [x] **Step 3: Run it and confirm it fails**
 
 Run: `pnpm exec jest --ci src/errors/ErrorToast.test.tsx`
 Expected: FAIL — `Cannot find module './ErrorToast'`.
 
-- [ ] **Step 4: Implement `src/errors/ErrorToast.tsx`**
+- [x] **Step 4: Implement `src/errors/ErrorToast.tsx`**
 
 ```tsx
 import {
@@ -942,7 +947,7 @@ export const ErrorToastProvider = ({ children }: PropsWithChildren) => {
 };
 ```
 
-- [ ] **Step 5: Implement `src/errors/useErrorToast.ts`**
+- [x] **Step 5: Implement `src/errors/useErrorToast.ts`**
 
 ```ts
 import { useContext } from 'react';
@@ -964,12 +969,12 @@ export const useErrorToast = (): ErrorToastValue => {
 };
 ```
 
-- [ ] **Step 6: Run the test and confirm it passes**
+- [x] **Step 6: Run the test and confirm it passes**
 
 Run: `pnpm exec jest --ci src/errors/ErrorToast.test.tsx`
 Expected: PASS, 7 tests.
 
-- [ ] **Step 7: Export the new surface**
+- [x] **Step 7: Export the new surface**
 
 Add to `src/errors/index.ts`:
 
@@ -979,7 +984,7 @@ export { configureErrorReporter, type ErrorReporter, reportError } from './repor
 export { useErrorToast } from './useErrorToast';
 ```
 
-- [ ] **Step 8: Verify and commit**
+- [x] **Step 8: Verify and commit**
 
 ```bash
 pnpm lint:fix && pnpm check && pnpm test:ci
