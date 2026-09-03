@@ -9,12 +9,12 @@ import {
   useState,
 } from 'react';
 
-import { API_ERROR_CODES, ApiError, configureAuthorization } from '@/lib';
+import { configureAuthorization } from '@/lib';
 import { fetchMe, login, register } from '../api/authApi';
-import type { User } from '../api/schemas';
 import { AUTH_QUERY_KEYS } from '../constants';
 import { clearAccessToken, readAccessToken, writeAccessToken } from '../storage';
-import { AUTH_STATUSES, type AuthContextValue, type AuthStatus } from '../types';
+import type { AuthContextValue } from '../types';
+import { isRejectedToken, resolveStatus } from '../utils/session';
 import type { Credentials } from '../validations';
 
 /**
@@ -26,27 +26,6 @@ export const AuthContext = createContext<AuthContextValue | null>(null);
 
 /** A rejected token will be rejected again; retrying only delays the boot. */
 const ME_RETRY_COUNT = 0;
-
-interface StatusInput {
-  hasCompletedBoot: boolean;
-  token: string | null;
-  user: User | null;
-}
-
-/**
- * `loading` means boot, and only boot — otherwise signing in would unmount the
- * sign-in screen into a full-screen splash mid-submit. And a token alone is not
- * a session: only `/auth/me` can say whether it still verifies.
- */
-const resolveStatus = ({ hasCompletedBoot, token, user }: StatusInput): AuthStatus => {
-  if (!hasCompletedBoot) return AUTH_STATUSES.LOADING;
-  if (token === null || user === null) return AUTH_STATUSES.SIGNED_OUT;
-
-  return AUTH_STATUSES.SIGNED_IN;
-};
-
-const isRejectedToken = (error: unknown): boolean =>
-  error instanceof ApiError && error.code === API_ERROR_CODES.INVALID_ACCESS_TOKEN;
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
   const queryClient = useQueryClient();

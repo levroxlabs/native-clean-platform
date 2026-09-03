@@ -66,6 +66,12 @@ Fala com os três endpoints de `/auth` da API (`api-clean-platform`).
 - `storage.web.ts` usa `localStorage`, que **não** é equivalente ao keychain —
   qualquer script da origem lê. O alvo web é conveniência de desenvolvimento,
   não superfície de produção.
+- **A lógica de "o que este boot/token/erro significa" mora em `utils/session.ts`**,
+  não dentro do `AuthProvider`: `resolveStatus` (deriva `AuthStatus` de
+  `hasCompletedBoot`/`token`/`user`) e `isRejectedToken` (reconhece um 401 de
+  token inválido). Nenhuma das duas é exportada pelo módulo — são detalhe de
+  implementação, testadas direto em `session.test.ts` em vez de só
+  indiretamente via `AuthContext.test.tsx`.
 
 ## Não existe ainda
 
