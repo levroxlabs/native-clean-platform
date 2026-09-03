@@ -1,4 +1,4 @@
-import { ACCESS_TOKEN_STORAGE_KEY } from './constants';
+import { REFRESH_TOKEN_STORAGE_KEY } from './constants';
 
 /**
  * `expo-secure-store` has no web implementation, and this repo supports
@@ -6,13 +6,13 @@ import { ACCESS_TOKEN_STORAGE_KEY } from './constants';
  * the origin. The web target here is a development convenience, not a supported
  * production surface — see this module's README.
  */
-export const readAccessToken = async (): Promise<string | null> =>
-  globalThis.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+export const readRefreshToken = async (): Promise<string | null> =>
+  globalThis.localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
 
-export const writeAccessToken = async (token: string): Promise<void> => {
-  globalThis.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
+export const writeRefreshToken = async (token: string): Promise<void> => {
+  globalThis.localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, token);
 };
 
-export const clearAccessToken = async (): Promise<void> => {
-  globalThis.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+export const clearRefreshToken = async (): Promise<void> => {
+  globalThis.localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
 };

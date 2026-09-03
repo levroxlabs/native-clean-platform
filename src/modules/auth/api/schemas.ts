@@ -5,10 +5,6 @@ const MIN_TOKEN_LENGTH = 1;
 
 export const registerResponseSchema = z.object({ id: z.uuid() });
 
-export const loginResponseSchema = z.object({
-  accessToken: z.string().min(MIN_TOKEN_LENGTH),
-});
-
 /**
  * What `login` and `refresh` both answer.
  *

@@ -36,15 +36,26 @@ describe('register', () => {
 });
 
 describe('login', () => {
-  it('posts the credentials and returns the access token', async () => {
-    mockApi.post.mockResolvedValue({ accessToken: 'a-signed-token' });
+  it('asks for body transport and returns both tokens', async () => {
+    mockApi.post.mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    });
 
-    await expect(login(CREDENTIALS)).resolves.toBe('a-signed-token');
-    expect(mockApi.post).toHaveBeenCalledWith('/auth/login', CREDENTIALS);
+    await expect(login(CREDENTIALS)).resolves.toEqual({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    });
+    // Stated rather than inherited from the server default: this client depends
+    // on the refresh token being in the body, so it says so.
+    expect(mockApi.post).toHaveBeenCalledWith('/auth/login', {
+      ...CREDENTIALS,
+      refreshTransport: 'body',
+    });
   });
 
-  it('rejects an empty access token as a contract drift', async () => {
-    mockApi.post.mockResolvedValue({ accessToken: '' });
+  it('rejects an answer with no refresh token as a contract drift', async () => {
+    mockApi.post.mockResolvedValue({ accessToken: ACCESS_TOKEN });
 
     await expect(login(CREDENTIALS)).rejects.toMatchObject({
       code: 'UNEXPECTED_RESPONSE',

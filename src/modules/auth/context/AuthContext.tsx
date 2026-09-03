@@ -9,12 +9,14 @@ import {
   useState,
 } from 'react';
 
+import { reportError } from '@/errors';
 import { configureAuthorization } from '@/lib';
-import { fetchMe, login, register } from '../api/authApi';
+import { fetchMe, login, refreshSession, register } from '../api/authApi';
 import { AUTH_QUERY_KEYS } from '../constants';
-import { clearAccessToken, readAccessToken, writeAccessToken } from '../storage';
+import { clearRefreshToken, readRefreshToken, writeRefreshToken } from '../storage';
 import type { AuthContextValue } from '../types';
 import { isEndedSession, resolveStatus } from '../utils/session';
+import { createSingleFlight } from '../utils/singleFlight';
 import type { Credentials } from '../validations';
 
 /**
@@ -55,9 +57,52 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
 
   const endSession = useCallback(async () => {
     applyToken(null);
-    await clearAccessToken();
+    await clearRefreshToken();
     queryClient.removeQueries({ queryKey: AUTH_QUERY_KEYS.ME });
   }, [applyToken, queryClient]);
+
+  /**
+   * The only place a refresh happens, and it happens once at a time — the API
+   * requires it: two concurrent refreshes of the same token return two tokens
+   * and only the last one issued stays valid.
+   *
+   * Its three answers are the contract `src/lib/api.ts` reads: a token means
+   * retry, `null` means the session is over AND has already been cleared here,
+   * and a rejection means the refresh itself failed with the session intact.
+   */
+  const refreshAccessToken = useMemo(
+    () =>
+      createSingleFlight(async (): Promise<string | null> => {
+        const stored = await readRefreshToken();
+
+        if (stored === null) {
+          await endSession();
+
+          return null;
+        }
+
+        try {
+          const { accessToken, refreshToken } = await refreshSession(stored);
+
+          // Written BEFORE this resolves: the token just spent must not survive
+          // a relaunch. If the process dies in this gap the disk holds a spent
+          // token, which the API's 30-second grace window exists to forgive.
+          await writeRefreshToken(refreshToken);
+          applyToken(accessToken);
+
+          return accessToken;
+        } catch (error) {
+          // Offline, or a 503 the API could not retry away: the caller owns it,
+          // and the session stays exactly as it was.
+          if (!isEndedSession(error)) throw error;
+
+          await endSession();
+
+          return null;
+        }
+      }),
+    [applyToken, endSession],
+  );
 
   useEffect(() => {
     configureAuthorization({
@@ -70,18 +115,38 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     return () => configureAuthorization(null);
   }, [endSession]);
 
-  // Boot: restore whatever the keychain holds, exactly once.
+  // Boot: spend whatever refresh token storage holds, exactly once.
   useEffect(() => {
     let isMounted = true;
 
     const restore = async () => {
-      const stored = await readAccessToken();
+      const stored = await readRefreshToken();
 
       if (!isMounted) return;
 
-      applyToken(stored);
-      // With no token there is nothing to verify, so boot is already over.
-      if (stored === null) setHasCompletedBoot(true);
+      if (stored === null) {
+        setHasCompletedBoot(true);
+
+        return;
+      }
+
+      try {
+        const accessToken = await refreshAccessToken();
+
+        if (!isMounted) return;
+
+        // A token hands boot over to `meQuery`; null means the runner already
+        // cleared the session, so there is nothing left to wait for.
+        if (accessToken === null) setHasCompletedBoot(true);
+      } catch (error) {
+        if (!isMounted) return;
+
+        // Not a TanStack Query call, so the global QueryCache callback that
+        // toasts a failed boot cannot see this one. Without this the user would
+        // land on the sign-in screen with no explanation.
+        reportError(error);
+        setHasCompletedBoot(true);
+      }
     };
 
     void restore();
@@ -89,7 +154,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     return () => {
       isMounted = false;
     };
-  }, [applyToken]);
+  }, [refreshAccessToken]);
 
   // Boot ends when the restored token has been answered for, either way.
   useEffect(() => {
@@ -106,9 +171,9 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
 
   const establishSession = useCallback(
     async (credentials: Credentials) => {
-      const accessToken = await login(credentials);
+      const { accessToken, refreshToken } = await login(credentials);
 
-      await writeAccessToken(accessToken);
+      await writeRefreshToken(refreshToken);
       applyToken(accessToken);
       // `fetchQuery`, not an invalidation: the user has to be in the cache
       // before this resolves, so the gate swaps in the same tick the screen

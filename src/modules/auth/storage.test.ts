@@ -1,26 +1,26 @@
-import { clearAccessToken, readAccessToken, writeAccessToken } from './storage';
+import { clearRefreshToken, readRefreshToken, writeRefreshToken } from './storage';
 
-const TOKEN = 'stored-token';
+const TOKEN = 'stored-refresh-token';
 
 beforeEach(async () => {
-  await clearAccessToken();
+  await clearRefreshToken();
 });
 
-describe('access token storage', () => {
+describe('refresh token storage', () => {
   it('reads null when nothing was stored', async () => {
-    await expect(readAccessToken()).resolves.toBeNull();
+    await expect(readRefreshToken()).resolves.toBeNull();
   });
 
   it('reads back what it wrote', async () => {
-    await writeAccessToken(TOKEN);
+    await writeRefreshToken(TOKEN);
 
-    await expect(readAccessToken()).resolves.toBe(TOKEN);
+    await expect(readRefreshToken()).resolves.toBe(TOKEN);
   });
 
   it('reads null after clearing', async () => {
-    await writeAccessToken(TOKEN);
-    await clearAccessToken();
+    await writeRefreshToken(TOKEN);
+    await clearRefreshToken();
 
-    await expect(readAccessToken()).resolves.toBeNull();
+    await expect(readRefreshToken()).resolves.toBeNull();
   });
 });

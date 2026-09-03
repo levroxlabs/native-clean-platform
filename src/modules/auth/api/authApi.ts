@@ -4,7 +4,6 @@ import { API_ERROR_CODES, ApiError, api, CLIENT_FAILURE_STATUS } from '@/lib';
 
 import type { Credentials } from '../validations';
 import {
-  loginResponseSchema,
   registerResponseSchema,
   type SessionTokens,
   sessionTokensSchema,
@@ -13,6 +12,9 @@ import {
 } from './schemas';
 
 const CONTRACT_DRIFT_MESSAGE = 'The API response did not match the expected shape:';
+
+/** Body transport, stated rather than inherited from the server default. */
+const REFRESH_TRANSPORT_BODY = 'body';
 
 /**
  * Parsing responses — not just requests — is what turns a silent contract drift
@@ -43,10 +45,13 @@ export const register = async (credentials: Credentials): Promise<string> => {
   return parseOrThrow(registerResponseSchema, payload).id;
 };
 
-export const login = async (credentials: Credentials): Promise<string> => {
-  const payload = await api.post('/auth/login', credentials);
+export const login = async (credentials: Credentials): Promise<SessionTokens> => {
+  const payload = await api.post('/auth/login', {
+    ...credentials,
+    refreshTransport: REFRESH_TRANSPORT_BODY,
+  });
 
-  return parseOrThrow(loginResponseSchema, payload).accessToken;
+  return parseOrThrow(sessionTokensSchema, payload);
 };
 
 /** The only way the API offers to tell whether a stored token still verifies. */
