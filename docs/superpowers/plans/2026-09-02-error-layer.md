@@ -41,7 +41,7 @@ The pure core. Everything later in the plan asks this module what kind of failur
 - Consumes: `ApiError`, `API_ERROR_CODES` from `@/lib`.
 - Produces: `ERROR_KINDS`, `type ErrorKind`, `classifyError(error: unknown): ErrorKind`, `isRetryable(error: unknown): boolean`, `shouldRetry(failureCount: number, error: unknown): boolean`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/errors/classify.test.ts`:
 
@@ -130,12 +130,12 @@ describe('shouldRetry', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and confirm it fails**
+- [x] **Step 2: Run it and confirm it fails**
 
 Run: `pnpm exec jest --ci src/errors/classify.test.ts`
 Expected: FAIL — `Cannot find module './classify'`.
 
-- [ ] **Step 3: Implement `src/errors/classify.ts`**
+- [x] **Step 3: Implement `src/errors/classify.ts`**
 
 ```ts
 import { API_ERROR_CODES, ApiError } from '@/lib';
@@ -159,8 +159,8 @@ const UNAUTHORIZED_STATUS = 401;
 const LOWEST_CLIENT_ERROR_STATUS = 400;
 const LOWEST_SERVER_ERROR_STATUS = 500;
 
-/** Attempts, not retries: 2 is the original call plus one more. */
-const MAX_QUERY_ATTEMPTS = 2;
+/** Retries *after* the original call, so one: two network attempts in total. */
+const MAX_RETRY_ATTEMPTS = 1;
 
 export const classifyError = (error: unknown): ErrorKind => {
   if (!(error instanceof ApiError)) return ERROR_KINDS.UNEXPECTED;
@@ -191,15 +191,15 @@ export const isRetryable = (error: unknown): boolean =>
 
 /** Shaped for TanStack Query's `retry` option. Queries only — see the plan. */
 export const shouldRetry = (failureCount: number, error: unknown): boolean =>
-  failureCount < MAX_QUERY_ATTEMPTS && isRetryable(error);
+  failureCount < MAX_RETRY_ATTEMPTS && isRetryable(error);
 ```
 
-- [ ] **Step 4: Run the test and confirm it passes**
+- [x] **Step 4: Run the test and confirm it passes**
 
 Run: `pnpm exec jest --ci src/errors/classify.test.ts`
 Expected: PASS, 12 tests.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 ```bash
 pnpm lint:fix && pnpm check && pnpm test:ci
