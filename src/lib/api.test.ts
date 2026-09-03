@@ -5,6 +5,7 @@ import { API_ERROR_CODES, ApiError, api, axiosInstance, configureAuthorization }
 const BASE_URL = 'http://localhost:3000';
 const PATH = '/auth/me';
 const TOKEN = 'a-token';
+const FRESH_TOKEN = 'a-fresh-token';
 
 const OK_STATUS = 200;
 const LOWEST_ERROR_STATUS = 300;
@@ -33,6 +34,37 @@ const respondWith = (status: number, data: unknown) => {
   };
 };
 
+interface CannedResponse {
+  status: number;
+  data: unknown;
+}
+
+/**
+ * Answers a different response per call, so a test can watch the retry: the
+ * first call fails, the second succeeds. The last entry repeats for any call
+ * beyond the list.
+ */
+const respondInOrder = (responses: readonly [CannedResponse, ...CannedResponse[]]) => {
+  let callCount = 0;
+  // The tuple's required first entry is what makes the lookup below total under
+  // `noUncheckedIndexedAccess`.
+  const [firstResponse] = responses;
+
+  axiosInstance.defaults.adapter = async (config) => {
+    lastConfig = config;
+    const { status, data } = responses[Math.min(callCount, responses.length - 1)] ?? firstResponse;
+    callCount += 1;
+
+    const response = { data, status, statusText: '', headers: {}, config } as AxiosResponse;
+
+    if (status >= OK_STATUS && status < LOWEST_ERROR_STATUS) return response;
+
+    throw new AxiosError('Request failed', String(status), config, null, response);
+  };
+
+  return { getCallCount: () => callCount };
+};
+
 const failWithoutResponse = () => {
   axiosInstance.defaults.adapter = async (config) => {
     lastConfig = config;
@@ -57,7 +89,7 @@ describe('api.get', () => {
 
   it('attaches the bearer token when a provider returns one', async () => {
     respondWith(OK_STATUS, {});
-    configureAuthorization({ getAccessToken: () => TOKEN, onUnauthorized: jest.fn() });
+    configureAuthorization({ getAccessToken: () => TOKEN, refreshAccessToken: jest.fn() });
 
     await api.get(PATH);
 
@@ -66,7 +98,7 @@ describe('api.get', () => {
 
   it('omits the header when there is no token', async () => {
     respondWith(OK_STATUS, {});
-    configureAuthorization({ getAccessToken: () => null, onUnauthorized: jest.fn() });
+    configureAuthorization({ getAccessToken: () => null, refreshAccessToken: jest.fn() });
 
     await api.get(PATH);
 
@@ -102,24 +134,6 @@ describe('api.get', () => {
       status: 502,
       code: API_ERROR_CODES.UNEXPECTED_RESPONSE,
     });
-  });
-
-  it('ends the session on a 401 caused by the access token', async () => {
-    const onUnauthorized = jest.fn();
-    respondWith(401, envelope(API_ERROR_CODES.INVALID_ACCESS_TOKEN));
-    configureAuthorization({ getAccessToken: () => TOKEN, onUnauthorized });
-
-    await expect(api.get(PATH)).rejects.toBeInstanceOf(ApiError);
-    expect(onUnauthorized).toHaveBeenCalledTimes(1);
-  });
-
-  it('does NOT end the session on the 401 a wrong password produces', async () => {
-    const onUnauthorized = jest.fn();
-    respondWith(401, envelope(API_ERROR_CODES.INVALID_CREDENTIALS));
-    configureAuthorization({ getAccessToken: () => null, onUnauthorized });
-
-    await expect(api.get(PATH)).rejects.toBeInstanceOf(ApiError);
-    expect(onUnauthorized).not.toHaveBeenCalled();
   });
 
   it('turns a request that never got a response into a NETWORK_ERROR ApiError', async () => {
@@ -172,5 +186,105 @@ describe('api.delete', () => {
 
     expect(lastConfig.method).toBe('delete');
     expect(lastConfig.data).toBeUndefined();
+  });
+});
+
+describe('the refresh retry', () => {
+  it('refreshes and repeats the request once, with the new token', async () => {
+    const adapter = respondInOrder([
+      { status: 401, data: envelope(API_ERROR_CODES.INVALID_ACCESS_TOKEN) },
+      { status: OK_STATUS, data: { id: 'user-1' } },
+    ]);
+    let currentToken = TOKEN;
+    const refreshAccessToken = jest.fn(async () => {
+      currentToken = FRESH_TOKEN;
+
+      return currentToken;
+    });
+    configureAuthorization({ getAccessToken: () => currentToken, refreshAccessToken });
+
+    await expect(api.get(PATH)).resolves.toEqual({ id: 'user-1' });
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(adapter.getCallCount()).toBe(2);
+    // The repeat goes back through the request interceptor, so it carries the
+    // token the refresh just produced — not the dead one it started with.
+    expect(lastConfig.headers.get('Authorization')).toBe(`Bearer ${FRESH_TOKEN}`);
+  });
+
+  it('repeats at most once, instead of looping on a token the API keeps rejecting', async () => {
+    const adapter = respondInOrder([
+      { status: 401, data: envelope(API_ERROR_CODES.INVALID_ACCESS_TOKEN) },
+    ]);
+    const refreshAccessToken = jest.fn(async () => FRESH_TOKEN);
+    configureAuthorization({ getAccessToken: () => TOKEN, refreshAccessToken });
+
+    await expect(api.get(PATH)).rejects.toMatchObject({
+      status: 401,
+      code: API_ERROR_CODES.INVALID_ACCESS_TOKEN,
+    });
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(adapter.getCallCount()).toBe(2);
+  });
+
+  it('propagates the original error when the handler says the session is over', async () => {
+    const adapter = respondInOrder([
+      { status: 401, data: envelope(API_ERROR_CODES.INVALID_ACCESS_TOKEN) },
+    ]);
+    // null means the handler has already ended the session locally: there is
+    // nothing for this layer to do but report why the request failed.
+    const refreshAccessToken = jest.fn(async () => null);
+    configureAuthorization({ getAccessToken: () => TOKEN, refreshAccessToken });
+
+    await expect(api.get(PATH)).rejects.toMatchObject({
+      status: 401,
+      code: API_ERROR_CODES.INVALID_ACCESS_TOKEN,
+    });
+    expect(adapter.getCallCount()).toBe(1);
+  });
+
+  it('propagates the refresh failure, so being offline is not read as a dead session', async () => {
+    respondInOrder([{ status: 401, data: envelope(API_ERROR_CODES.INVALID_ACCESS_TOKEN) }]);
+    const refreshAccessToken = jest.fn(async () => {
+      throw new ApiError({
+        status: 0,
+        code: API_ERROR_CODES.NETWORK_ERROR,
+        message: 'The request did not reach the API.',
+      });
+    });
+    configureAuthorization({ getAccessToken: () => TOKEN, refreshAccessToken });
+
+    await expect(api.get(PATH)).rejects.toMatchObject({
+      status: 0,
+      code: API_ERROR_CODES.NETWORK_ERROR,
+    });
+  });
+
+  it('does not refresh the 401 a wrong password produces', async () => {
+    respondWith(401, envelope(API_ERROR_CODES.INVALID_CREDENTIALS));
+    const refreshAccessToken = jest.fn(async () => FRESH_TOKEN);
+    configureAuthorization({ getAccessToken: () => null, refreshAccessToken });
+
+    await expect(api.get(PATH)).rejects.toBeInstanceOf(ApiError);
+    expect(refreshAccessToken).not.toHaveBeenCalled();
+  });
+
+  it('does not refresh a 401 from the refresh endpoint itself', async () => {
+    // No opt-out flag is needed anywhere: the API gives every failure its own
+    // code, and only INVALID_ACCESS_TOKEN starts a refresh.
+    respondWith(401, envelope(API_ERROR_CODES.INVALID_REFRESH_TOKEN));
+    const refreshAccessToken = jest.fn(async () => FRESH_TOKEN);
+    configureAuthorization({ getAccessToken: () => TOKEN, refreshAccessToken });
+
+    await expect(api.post('/auth/refresh', { refreshToken: 'spent' })).rejects.toBeInstanceOf(
+      ApiError,
+    );
+    expect(refreshAccessToken).not.toHaveBeenCalled();
+  });
+
+  it('still rejects cleanly when no handlers are registered', async () => {
+    respondWith(401, envelope(API_ERROR_CODES.INVALID_ACCESS_TOKEN));
+    configureAuthorization(null);
+
+    await expect(api.get(PATH)).rejects.toBeInstanceOf(ApiError);
   });
 });

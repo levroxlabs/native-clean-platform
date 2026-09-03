@@ -80,7 +80,16 @@ export interface ErrorEnvelope {
 /** The pair of callbacks that ties this client to the session. */
 export interface AuthorizationHandlers {
   getAccessToken: () => string | null;
-  onUnauthorized: () => void;
+  /**
+   * Resolves with a fresh access token, or `null` when the session is over — in
+   * which case the handler has ALREADY ended it locally. Rejects only when the
+   * refresh itself failed for a reason that is not the session (offline, 503),
+   * and that rejection is what the caller sees instead of the original 401.
+   *
+   * The handler serialises its own calls; this client may call it from several
+   * failed requests at once.
+   */
+  refreshAccessToken: () => Promise<string | null>;
 }
 
 const API_ERROR_NAME = 'ApiError';
@@ -123,9 +132,9 @@ let handlers: AuthorizationHandlers | null = null;
  * The only tie between this module and the session. `AuthProvider` registers
  * itself on mount and clears the registration on unmount.
  *
- * This is where token refresh goes when the API grows `POST /auth/refresh`:
- * `onUnauthorized` attempts the refresh and retries, instead of ending the
- * session. Nothing else in the app changes — spec §9.
+ * This module knows only that a 401 with one particular code is worth one
+ * retry. Which failures end a session, where the refresh token lives, and what
+ * a reused token means all stay in `src/modules/auth/`.
  */
 export const configureAuthorization = (next: AuthorizationHandlers | null): void => {
   handlers = next;
@@ -185,16 +194,6 @@ const toApiError = (error: AxiosError): ApiError => {
 
   const { error: envelope } = response.data;
 
-  // Only a token failure ends the session. A 401 from `/auth/login` means the
-  // password was wrong — signing the user out there would be answering a failed
-  // guess by destroying a session that does not exist.
-  if (
-    response.status === UNAUTHORIZED_STATUS &&
-    envelope.code === API_ERROR_CODES.INVALID_ACCESS_TOKEN
-  ) {
-    handlers?.onUnauthorized();
-  }
-
   return new ApiError({
     status: response.status,
     code: envelope.code,
@@ -204,9 +203,41 @@ const toApiError = (error: AxiosError): ApiError => {
   });
 };
 
-axiosInstance.interceptors.response.use(undefined, (error: AxiosError) =>
-  Promise.reject(toApiError(error)),
-);
+interface RetriableRequestConfig extends InternalAxiosRequestConfig {
+  /** Set on the repeat, so a second 401 cannot start another refresh. */
+  hasRetriedAfterRefresh?: boolean;
+}
+
+/**
+ * Only a dead access token is worth refreshing. A wrong password is a 401 too,
+ * and `/auth/refresh` and `/auth/logout` answer `INVALID_REFRESH_TOKEN` — so
+ * the API's distinct codes are what keep this from needing a per-request
+ * opt-out flag.
+ */
+const shouldAttemptRefresh = (error: ApiError, config: RetriableRequestConfig): boolean =>
+  error.status === UNAUTHORIZED_STATUS &&
+  error.code === API_ERROR_CODES.INVALID_ACCESS_TOKEN &&
+  config.hasRetriedAfterRefresh !== true;
+
+axiosInstance.interceptors.response.use(undefined, async (error: AxiosError) => {
+  const apiError = toApiError(error);
+  const config = error.config as RetriableRequestConfig | undefined;
+
+  if (handlers === null || config === undefined || !shouldAttemptRefresh(apiError, config)) {
+    throw apiError;
+  }
+
+  // A rejection here is NOT a dead session — it is the refresh's own failure,
+  // and it propagates in place of the 401 so the caller sees why it really
+  // failed. `null` is the dead session, and the handler has already cleaned up.
+  const accessToken = await handlers.refreshAccessToken();
+
+  if (accessToken === null) throw apiError;
+
+  const retried: RetriableRequestConfig = { ...config, hasRetriedAfterRefresh: true };
+
+  return axiosInstance.request(retried);
+});
 
 const send = async <TResponse>(
   path: string,

@@ -107,13 +107,11 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     configureAuthorization({
       getAccessToken: () => tokenRef.current,
-      onUnauthorized: () => {
-        void endSession();
-      },
+      refreshAccessToken,
     });
 
     return () => configureAuthorization(null);
-  }, [endSession]);
+  }, [refreshAccessToken]);
 
   // Boot: spend whatever refresh token storage holds, exactly once.
   useEffect(() => {
