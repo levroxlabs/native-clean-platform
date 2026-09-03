@@ -1009,7 +1009,7 @@ The task that makes the previous four do anything. It is also the one whose seam
 - Consumes: `shouldRetry`, `reportError`, `registerErrorCopy`, `ErrorBoundary`, `ErrorToastProvider` from `@/errors`; `AUTH_ERROR_COPY` from `@/modules/auth`.
 - Produces: `startConnectivityWatch(): void` from `@/lib`.
 
-- [ ] **Step 1: Install NetInfo**
+- [x] **Step 1: Install NetInfo**
 
 ```bash
 npx expo install @react-native-community/netinfo
@@ -1017,7 +1017,7 @@ npx expo install @react-native-community/netinfo
 
 `npx expo install`, not `pnpm add`: it resolves the version matching SDK 57 rather than the newest published one. The package is included in Expo Go, so this does not force a dev client rebuild.
 
-- [ ] **Step 2: Implement `src/lib/connectivity.ts`**
+- [x] **Step 2: Implement `src/lib/connectivity.ts`**
 
 ```ts
 import NetInfo from '@react-native-community/netinfo';
@@ -1041,7 +1041,7 @@ export const startConnectivityWatch = (): void => {
 };
 ```
 
-- [ ] **Step 3: Export it**
+- [x] **Step 3: Export it**
 
 Add to `src/lib/index.ts`:
 
@@ -1049,7 +1049,7 @@ Add to `src/lib/index.ts`:
 export { startConnectivityWatch } from './connectivity';
 ```
 
-- [ ] **Step 4: Write the failing integration test**
+- [x] **Step 4: Write the failing integration test**
 
 Create `src/errors/reporting.test.tsx`:
 
@@ -1138,14 +1138,16 @@ describe('a failing query', () => {
 });
 ```
 
-- [ ] **Step 5: Run it and confirm it fails**
+- [x] **Step 5: Run it**
 
 Run: `pnpm exec jest --ci src/errors/reporting.test.tsx`
-Expected: FAIL — the toast copy is not found, because nothing has wired `QueryCache.onError` to `reportError` yet in this test's own client. (This test builds its own client on purpose: it proves the seam, not `App.tsx`.)
+Expected: **PASS, 2 tests.**
 
-If it *passes* at this point, something else is registering a reporter — stop and find out what.
+This one is not a red-green cycle, and the plan should not pretend otherwise: the test builds its own `QueryClient` with the `onError` wiring, so it depends on nothing from this task — the pieces it exercises were all built in Task 4. It is a characterisation test for the seam, and its value is regression cover for the wiring `App.tsx` is about to repeat.
 
-- [ ] **Step 6: Rewrite `App.tsx`**
+If it *fails*, the reporter seam from Task 4 is broken — fix that before touching `App.tsx`.
+
+- [x] **Step 6: Rewrite `App.tsx`**
 
 ```tsx
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -1215,12 +1217,12 @@ export default App;
 
 `ErrorBoundary` sits inside `SafeAreaProvider` so its fallback can use insets, and outside `AuthProvider` so a crash in the provider is caught too. `StatusBar` moves inside the boundary's subtree along with everything else.
 
-- [ ] **Step 7: Run the integration test and confirm it passes**
+- [x] **Step 7: Run the integration test and confirm it passes**
 
 Run: `pnpm exec jest --ci src/errors/reporting.test.tsx`
 Expected: PASS, 2 tests.
 
-- [ ] **Step 8: Confirm the auth boot behaviour changed as intended**
+- [x] **Step 8: Confirm the auth boot behaviour changed as intended**
 
 `AuthProvider`'s `/auth/me` query is deliberately **not** silenced, so a network failure at boot now shows the offline toast instead of dropping the user on the sign-in screen with no explanation (spec §7). Its own `retry: ME_RETRY_COUNT` (0) still wins over the new global `shouldRetry`, so boot is not slowed down.
 
@@ -1229,7 +1231,7 @@ Run the auth suite and confirm it is untouched by all of this:
 Run: `pnpm exec jest --ci src/modules/auth`
 Expected: PASS, unchanged.
 
-- [ ] **Step 9: Verify and commit**
+- [x] **Step 9: Verify and commit**
 
 ```bash
 pnpm lint:fix && pnpm check && pnpm test:ci

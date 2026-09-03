@@ -12,3 +12,4 @@ export {
   request,
   type ValidationDetail,
 } from './api';
+export { startConnectivityWatch } from './connectivity';
