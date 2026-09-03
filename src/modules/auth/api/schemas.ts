@@ -1,13 +1,27 @@
 import { z } from 'zod';
 
 /** Presence, not shape: the client has no business asserting JWT structure. */
-const MIN_ACCESS_TOKEN_LENGTH = 1;
+const MIN_TOKEN_LENGTH = 1;
 
 export const registerResponseSchema = z.object({ id: z.uuid() });
 
 export const loginResponseSchema = z.object({
-  accessToken: z.string().min(MIN_ACCESS_TOKEN_LENGTH),
+  accessToken: z.string().min(MIN_TOKEN_LENGTH),
 });
+
+/**
+ * What `login` and `refresh` both answer.
+ *
+ * `refreshToken` is required here and optional in the API's own schema: the API
+ * publishes one shape for both transports, and this client always asks for body
+ * transport (see `authApi.ts`). An answer without it is drift.
+ */
+export const sessionTokensSchema = z.object({
+  accessToken: z.string().min(MIN_TOKEN_LENGTH),
+  refreshToken: z.string().min(MIN_TOKEN_LENGTH),
+});
+
+export type SessionTokens = z.infer<typeof sessionTokensSchema>;
 
 /**
  * Dates stay ISO strings — nothing formats or compares one yet, so converting

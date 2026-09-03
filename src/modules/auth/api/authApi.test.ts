@@ -1,6 +1,6 @@
 import { api } from '@/lib';
 
-import { fetchMe, login, register } from './authApi';
+import { fetchMe, login, logout, logoutEverywhere, refreshSession, register } from './authApi';
 
 jest.mock('@/lib', () => ({
   ...jest.requireActual('@/lib'),
@@ -11,6 +11,9 @@ const mockApi = api as jest.Mocked<typeof api>;
 
 const CREDENTIALS = { email: 'user@example.com', password: 'sup3rS3cret!' };
 const USER_ID = '0d3d5d8a-6f2e-4d2e-9f1a-6d0f9a3b5c21';
+const ACCESS_TOKEN = 'an-access-token';
+const REFRESH_TOKEN = 'a-refresh-token';
+const ROTATED_REFRESH_TOKEN = 'the-next-refresh-token';
 const PROFILE = {
   id: USER_ID,
   email: CREDENTIALS.email,
@@ -63,5 +66,48 @@ describe('fetchMe', () => {
     await expect(fetchMe()).rejects.toMatchObject({
       code: 'UNEXPECTED_RESPONSE',
     });
+  });
+});
+
+describe('refreshSession', () => {
+  it('posts the stored token and returns the rotated pair', async () => {
+    mockApi.post.mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: ROTATED_REFRESH_TOKEN,
+    });
+
+    await expect(refreshSession(REFRESH_TOKEN)).resolves.toEqual({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: ROTATED_REFRESH_TOKEN,
+    });
+    expect(mockApi.post).toHaveBeenCalledWith('/auth/refresh', { refreshToken: REFRESH_TOKEN });
+  });
+
+  it('rejects an answer with no refresh token as a contract drift', async () => {
+    mockApi.post.mockResolvedValue({ accessToken: ACCESS_TOKEN });
+
+    await expect(refreshSession(REFRESH_TOKEN)).rejects.toMatchObject({
+      code: 'UNEXPECTED_RESPONSE',
+    });
+  });
+});
+
+describe('logout', () => {
+  it('posts the refresh token and parses nothing, since the API answers 204', async () => {
+    mockApi.post.mockResolvedValue(null);
+
+    await expect(logout(REFRESH_TOKEN)).resolves.toBeUndefined();
+    expect(mockApi.post).toHaveBeenCalledWith('/auth/logout', { refreshToken: REFRESH_TOKEN });
+  });
+});
+
+describe('logoutEverywhere', () => {
+  it('posts with no body, since the API takes the user from the bearer token', async () => {
+    // Deliberate: sending a userId here would let any authenticated caller sign
+    // anyone out, so the API reads it from the verified token subject only.
+    mockApi.post.mockResolvedValue(null);
+
+    await expect(logoutEverywhere()).resolves.toBeUndefined();
+    expect(mockApi.post).toHaveBeenCalledWith('/auth/logout-all');
   });
 });
