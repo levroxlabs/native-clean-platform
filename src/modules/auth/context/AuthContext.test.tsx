@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
 
@@ -165,5 +165,50 @@ describe('AuthProvider', () => {
     expect(await screen.findByText('status:signedOut')).toBeTruthy();
     expect(await screen.findByText('user:none')).toBeTruthy();
     await expect(readAccessToken()).resolves.toBeNull();
+  });
+
+  describe('while the connectivity watcher reports the device offline', () => {
+    // startConnectivityWatch (src/lib/connectivity.ts) feeds this same
+    // onlineManager, so this is what a real airplane-mode boot looks like to
+    // TanStack Query — not a mocked axios failure.
+    afterEach(() => {
+      onlineManager.setOnline(true);
+    });
+
+    it('still boots to signedOut instead of hanging on the splash screen', async () => {
+      onlineManager.setOnline(false);
+      await writeAccessToken(TOKEN);
+      mockFetchMe.mockRejectedValue(
+        new ApiError({
+          status: 0,
+          code: API_ERROR_CODES.NETWORK_ERROR,
+          message: 'The request did not reach the API.',
+        }),
+      );
+
+      await renderAuth();
+
+      // The default networkMode pauses a query while onlineManager reports
+      // offline, and a paused query never reaches isSuccess or isError — the
+      // boot gate would wait for either forever. This assertion times out on
+      // that bug rather than failing fast.
+      expect(await screen.findByText('status:signedOut')).toBeTruthy();
+      expect(mockFetchMe).toHaveBeenCalled();
+    });
+
+    it('still lets the user sign in instead of leaving the submit stuck forever', async () => {
+      onlineManager.setOnline(false);
+      mockLogin.mockResolvedValue(TOKEN);
+      mockFetchMe.mockResolvedValue(PROFILE);
+
+      await renderAuth();
+      await screen.findByText('status:signedOut');
+      await fireEvent.press(screen.getByText(SIGN_IN_LABEL));
+
+      // Same trap on the mutation side: the default networkMode pauses it
+      // offline, so mutationFn is never called and mutateAsync never settles.
+      expect(await screen.findByText('status:signedIn')).toBeTruthy();
+      expect(mockLogin).toHaveBeenCalledWith(CREDENTIALS);
+    });
   });
 });

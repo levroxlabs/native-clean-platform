@@ -66,6 +66,12 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     queryFn: fetchMe,
     enabled: token !== null,
     retry: ME_RETRY_COUNT,
+    // The app-wide default pauses a query while offline instead of running it,
+    // so it never reaches isSuccess or isError. The boot gate below waits for
+    // one of those, so a paused boot query would trap the app on the splash
+    // screen for as long as the device stays offline. `login`/`signUp` need
+    // the same override, for the mirror reason on the mutation side.
+    networkMode: 'always',
   });
 
   const endSession = useCallback(async () => {
@@ -127,13 +133,19 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       applyToken(accessToken);
       // `fetchQuery`, not an invalidation: the user has to be in the cache
       // before this resolves, so the gate swaps in the same tick the screen
-      // stops submitting.
-      await queryClient.fetchQuery({ queryKey: AUTH_QUERY_KEYS.ME, queryFn: fetchMe });
+      // stops submitting. `networkMode: 'always'` for the same reason as
+      // `meQuery` above — this imperative call has its own default and does
+      // not inherit the hook's option.
+      await queryClient.fetchQuery({
+        queryKey: AUTH_QUERY_KEYS.ME,
+        queryFn: fetchMe,
+        networkMode: 'always',
+      });
     },
     [applyToken, queryClient],
   );
 
-  const signInMutation = useMutation({ mutationFn: establishSession });
+  const signInMutation = useMutation({ mutationFn: establishSession, networkMode: 'always' });
 
   const signUpMutation = useMutation({
     mutationFn: async (credentials: Credentials) => {
@@ -143,6 +155,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       await register(credentials);
       await establishSession(credentials);
     },
+    networkMode: 'always',
   });
 
   const signOut = useCallback(async () => {
