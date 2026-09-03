@@ -8,10 +8,10 @@ o ponto de partida que outros projetos clonam.
 react-hook-form + zod · expo-secure-store · Biome · pnpm
 
 **Status:** estrutura, ferramentas e convenções prontas, mais o módulo `auth`
-implementado contra os três endpoints de `/auth` de `api-clean-platform`:
-cadastro, login, restauração da sessão no boot, logout e gate de navegação.
-Refresh de token e logout no servidor ficam de fora porque a API ainda não tem
-esses endpoints. Há também uma camada de erros: error boundary de render, toast
+implementado contra os seis endpoints de `/auth` de `api-clean-platform`:
+cadastro, login, rotação do refresh token, restauração da sessão no boot,
+logout neste aparelho ou em todos, e gate de navegação. Há também uma camada de
+erros: error boundary de render, toast
 global para falhas sem tela dona, copy compartilhada por `code` e queries que
 pausam quando o aparelho fica offline.
 
@@ -171,8 +171,8 @@ deslogado.
       (sem flows ainda — veja `.maestro/README.md`).
 - [x] **Auth** — módulo em `src/modules/auth/` contra `api-clean-platform`:
       cliente HTTP (axios) em `src/lib/`, `useAuth()` / `AuthProvider`,
-      token no `expo-secure-store`, telas de sign-in / sign-up com validação,
-      e navegação condicional entre o stack logado e o deslogado. Refresh de
-      token e logout no servidor ficam adiados até a API publicar os
-      endpoints — o único ponto a mudar é `configureAuthorization`.
+      refresh token rotativo no `expo-secure-store` (o access token fica só em
+      memória), refresh single-flight com repetição automática da request que
+      falhou, logout neste aparelho e em todos, telas de sign-in / sign-up com
+      validação, e navegação condicional entre o stack logado e o deslogado.
 - [ ] **Polimento** — guia de adoção do boilerplate.

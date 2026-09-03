@@ -16,7 +16,7 @@ se registra nele.
 
 | Name                           | Description                                                     |
 | ------------------------------ | ---------------------------------------------------------------- |
-| `configureAuthorization(h)`    | Registra `{ getAccessToken, onUnauthorized }`. Passe `null` para desregistrar. |
+| `configureAuthorization(h)`    | Registra `{ getAccessToken, refreshAccessToken }`. Passe `null` para desregistrar. |
 | `startConnectivityWatch()`     | Liga o NetInfo ao `onlineManager` do TanStack Query. Chamado uma vez pelo `App.tsx`. |
 
 ## Constants
@@ -54,9 +54,23 @@ se registra nele.
 - **`code` é contrato; `message` não é.** Trate por `code`; a `message` serve
   para log e debug e nunca vai crua para a tela. Um `code` desconhecido cai na
   copy genérica da tela — por isso `ApiError.code` é `string`, não uma união.
-- **Um 401 só encerra a sessão quando o código é `INVALID_ACCESS_TOKEN`.** O
-  401 de `/auth/login` significa senha errada, e deslogar ali seria destruir
-  uma sessão que não existe.
+- **Só um `401 INVALID_ACCESS_TOKEN` dispara refresh.** O cliente chama
+  `refreshAccessToken()`, espera, e **repete a request uma vez** com o token
+  novo. As três respostas do handler são o contrato inteiro: um token significa
+  repetir; `null` significa que a sessão acabou **e já foi encerrada pelo
+  handler**, então o erro original é propagado; uma rejeição significa que o
+  próprio refresh falhou (offline, 503) com a sessão intacta — e é ela que o
+  chamador vê, em vez do 401. É isso que impede uma conexão perdida de ser lida
+  como logout.
+- **Nenhuma flag de opt-out por request é necessária**, e é a API que torna isso
+  possível: `/auth/refresh` e `/auth/logout` falham com `INVALID_REFRESH_TOKEN`
+  e `/auth/login` com `INVALID_CREDENTIALS`, então só `/auth/me` e
+  `/auth/logout-all` produzem o código que dispara refresh — exatamente as duas
+  chamadas que vale repetir. A única guarda é contra loop: `hasRetriedAfterRefresh`
+  na config do axios.
+- **Esta camada não sabe o que é refresh token.** Onde ele mora, o que
+  `REFRESH_TOKEN_REUSED` significa e quais falhas encerram sessão são assunto de
+  `src/modules/auth/`.
 - **Timeout e cancelamento são do axios**, não escritos à mão. Não use
   `AbortSignal.timeout()` em lugar nenhum deste repo: o React Native faz
   polyfill de `AbortSignal` com `abort-controller@3`, que não tem o método
@@ -65,5 +79,3 @@ se registra nele.
 - **O React Native não tem `navigator.onLine`.** Sem `startConnectivityWatch()`,
   o TanStack Query assume que o aparelho está sempre online: nunca pausa uma
   query e gasta tentativas contra um rádio desligado.
-- `configureAuthorization` é o único ponto a mudar quando a API ganhar
-  `POST /auth/refresh`.

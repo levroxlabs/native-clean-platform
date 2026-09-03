@@ -33,7 +33,7 @@ código de servidor, banco ou emissão de token. É por isso que este documento
 não tem seção de banco de dados, taxonomia de erro de domínio ou camada de
 infra: nada disso é responsabilidade deste lado da fronteira.
 
-Hoje existe **um módulo**, `auth` (§2), construído contra os três endpoints
+Hoje existe **um módulo**, `auth` (§2), construído contra os seis endpoints
 de `/auth` de `api-clean-platform`. Ele é a referência de formato para o
 próximo: é o `index.ts` dele que define o que o resto do app enxerga, e foi
 ele que forçou à existência os dois módulos de topo que faltavam —
@@ -445,13 +445,13 @@ arrow function e nenhum número mágico.
 Listado para não ser confundido com omissão, sem detalhar o que não foi
 construído:
 
-refresh de token e logout no servidor (a API não tem os endpoints; enquanto
-não tiver, um `401 INVALID_ACCESS_TOKEN` encerra a sessão e o logout é local —
-o único ponto a mudar é `configureAuthorization`) · password reset ·
+password reset ·
 verificação de e-mail · componente compartilhado em `src/components/` (vazio —
 nenhum segundo consumidor apareceu ainda) · `src/hooks/`, `src/store/`
 (criados só quando algo precisar deles, §1) · telemetria e crash reporting
 (nenhum sink: a camada de erros não reporta para lugar nenhum) · fila de toasts,
 swipe para dispensar e boundary por tela (§6 da spec da camada de erros) · flow
 de E2E no Maestro · fronteira de módulo verificada por lint/dependency-cruiser
-(§2).
+(§2) · transporte por cookie no alvo web (o app pede sempre `refreshTransport:
+'body'`) · refresh proativo agendado pelo `exp` do JWT · listagem de sessões e
+revogação por aparelho (a API não expõe endpoint para enumerá-las).

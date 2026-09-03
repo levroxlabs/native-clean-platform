@@ -40,6 +40,15 @@ a copy que o usuário lê, o error boundary de render e o toast global.
 - **`input` é qualquer 4xx que não seja erro de sessão**, e a ordem do teste
   importa: senha errada também é 401, e classificá-la como sessão responderia o
   erro mais comum do app com a copy mais genérica.
+- **Sessão é um conjunto de códigos, não um status.** `INVALID_ACCESS_TOKEN`,
+  `INVALID_REFRESH_TOKEN` e `REFRESH_TOKEN_REUSED` são os três 401 que
+  significam "a sessão acabou"; qualquer outro 401 é `input`. Antes dos
+  endpoints de refresh existirem só o primeiro era testado, e os outros dois
+  teriam caído no `>= 400` — respondendo uma sessão encerrada com "verifique os
+  campos acima".
+- **`TRANSACTION_CONFLICT` não precisou de classificação.** Ele chega com 503,
+  então o ramo `>= 500` já o torna `server` e portanto retryable; só ganhou
+  copy.
 - **Query mostra toast, mutation não.** Uma query de fundo não tem call site
   para exibir a falha; um formulário já mostra o erro de submit inline, e
   repetir em toast diria a mesma coisa duas vezes. Uma query sai da regra com

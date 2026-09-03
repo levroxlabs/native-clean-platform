@@ -1,8 +1,9 @@
 # Auth
 
-Sessão do app: cadastro, login, restauração da sessão no boot, logout e o
-estado que a navegação usa para escolher entre o stack logado e o deslogado.
-Fala com os três endpoints de `/auth` da API (`api-clean-platform`).
+Sessão do app: cadastro, login, rotação do refresh token, restauração da sessão
+no boot, logout (neste aparelho ou em todos) e o estado que a navegação usa para
+escolher entre o stack logado e o deslogado. Fala com os seis endpoints de
+`/auth` da API (`api-clean-platform`).
 
 ## Components
 
@@ -15,7 +16,7 @@ Fala com os três endpoints de `/auth` da API (`api-clean-platform`).
 
 | Name       | Description                                                              |
 | ---------- | -------------------------------------------------------------------------- |
-| `useAuth()` | `{ status, user, signIn, signUp, signOut, isSubmitting }`. Lança se usado fora do `AuthProvider`. |
+| `useAuth()` | `{ status, user, signIn, signUp, signOut, signOutEverywhere, isSubmitting, isSigningOut }`. Lança se usado fora do `AuthProvider`. |
 
 ## Constants
 
@@ -41,6 +42,28 @@ Fala com os três endpoints de `/auth` da API (`api-clean-platform`).
   do submit.
 - **`signedIn` exige token E usuário.** Token sozinho não é sessão: só
   `/auth/me` diz se ele ainda verifica.
+- **O access token nunca vai para o disco.** O SecureStore guarda só o refresh
+  token; o access vive em memória enquanto o processo existir. O boot restaura a
+  sessão **gastando** o refresh token, não confiando num access guardado — é o
+  que a decisão 11 da API prescreve, e tira do disco uma credencial válida por
+  uma hora inteira.
+- **Refresh é single-flight, e a API exige isso por escrito.** Dois refresh
+  concorrentes com o mesmo token devolvem dois tokens e só o último emitido
+  continua válido; quem guardar o outro é deslogado no refresh seguinte.
+  `createSingleFlight` (em `utils/`) é o que garante uma chamada por vez, com
+  quem chegar depois esperando o mesmo resultado.
+- **O token rotacionado é gravado antes de o refresh resolver.** Se o processo
+  morrer nesse intervalo, o disco fica com um token já gasto — que é exatamente
+  o que a janela de graça de 30 segundos da API perdoa. Passado esse tempo vira
+  detecção de reuso e logout, e esse é o comportamento correto, não um defeito
+  a esconder.
+- **`signOut` engole a falha; `signOutEverywhere` não.** O primeiro tenta o
+  `POST /auth/logout` e **sempre** sai localmente: prender o usuário numa conta
+  porque o aparelho está offline é pior do que um refresh token que vive até
+  expirar, ainda mais quando a limpeza local apaga a única cópia dele. O segundo
+  relança e **mantém** a sessão: a promessa dele é "todos os aparelhos", e
+  degradar em silêncio para um logout local diria que as outras sessões
+  acabaram quando não acabaram.
 - **O usuário sai do token, não do cache.** O logout esvazia o cache do
   TanStack Query fora do ciclo de render do React, e cache esvaziado não agenda
   render nenhum: ler `meQuery.data` direto manteria na tela o perfil de quem
@@ -66,16 +89,12 @@ Fala com os três endpoints de `/auth` da API (`api-clean-platform`).
 - `storage.web.ts` usa `localStorage`, que **não** é equivalente ao keychain —
   qualquer script da origem lê. O alvo web é conveniência de desenvolvimento,
   não superfície de produção.
-- **A lógica de "o que este boot/token/erro significa" mora em `utils/session.ts`**,
-  não dentro do `AuthProvider`: `resolveStatus` (deriva `AuthStatus` de
-  `hasCompletedBoot`/`token`/`user`) e `isRejectedToken` (reconhece um 401 de
-  token inválido). Nenhuma das duas é exportada pelo módulo — são detalhe de
-  implementação, testadas direto em `session.test.ts` em vez de só
+- **A lógica de "o que este boot/token/erro significa" mora em `utils/`**, não
+  dentro do `AuthProvider`: `resolveStatus` (deriva `AuthStatus` de
+  `hasCompletedBoot`/`token`/`user`), `isEndedSession` (os três códigos que
+  significam sessão encerrada) e `createSingleFlight`. Nenhuma é exportada pelo
+  módulo — são detalhe de implementação, testadas direto em vez de só
   indiretamente via `AuthContext.test.tsx`.
-
-## Não existe ainda
-
-Refresh de token e logout no servidor: a API não tem os endpoints. Enquanto não
-tiver, um `401 INVALID_ACCESS_TOKEN` encerra a sessão e o logout é local. O
-único ponto a mudar é `configureAuthorization` em `src/lib/` — o
-desenho está em `docs/superpowers/specs/2026-09-01-auth-module-design.md`, §9.
+- **`isEndedSession` delega para o `classifyError` de `@/errors`** em vez de
+  repetir o conjunto de códigos. Duas listas dos mesmos três códigos divergem no
+  dia em que um quarto aparecer.

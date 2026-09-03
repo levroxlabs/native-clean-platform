@@ -318,6 +318,19 @@ it is not recreated on re-render.
 
 ### 9. The refresh seam
 
+> **Delivered on 2026-09-03** by
+> [`2026-09-03-auth-refresh-logout-design.md`](2026-09-03-auth-refresh-logout-design.md).
+> The seam held: no screen, no navigator and no other module changed, and the
+> tie between the two layers is still `configureAuthorization`.
+>
+> One prediction below was wrong, and in the useful direction. Point 3 expected
+> `storage.ts` to persist the refresh token **alongside** the access token; it
+> replaced it instead, because the access token stopped being persisted at all
+> and now lives in memory for the life of the process. Point 1 also moved: the
+> retry lives in `src/lib/api.ts`, but the queue and the policy stayed in the
+> module, since "which failures end a session" is module knowledge that layer
+> may not hold.
+
 When `POST /auth/refresh` and `POST /auth/logout` land in the API, the change
 here is bounded to:
 
