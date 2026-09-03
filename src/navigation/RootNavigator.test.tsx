@@ -1,5 +1,8 @@
 import { render, screen } from '@testing-library/react-native';
 
+import { type Metrics, SafeAreaProvider } from 'react-native-safe-area-context';
+
+import { ErrorToastProvider } from '@/errors';
 import { AUTH_STATUSES } from '@/modules/auth';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 
@@ -22,8 +25,31 @@ const sessionWith = (status: string) =>
     signIn: jest.fn(),
     signUp: jest.fn(),
     signOut: jest.fn(),
+    signOutEverywhere: jest.fn(),
     isSubmitting: false,
+    isSigningOut: false,
   }) as never;
+
+/** `initialMetrics` skips the native measurement, which never resolves under Jest. */
+const SAFE_AREA_METRICS: Metrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 47, left: 0, right: 0, bottom: 34 },
+};
+
+/**
+ * The two providers mirror `App.tsx`, which mounts both above `RootNavigator`.
+ * This test renders the real screens, so it has to render the environment they
+ * need: `HomeScreen` reaches for the toast to report a failed "sign out
+ * everywhere", and the toast in turn needs the safe area.
+ */
+const renderNavigator = async () =>
+  render(
+    <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+      <ErrorToastProvider>
+        <RootNavigator />
+      </ErrorToastProvider>
+    </SafeAreaProvider>,
+  );
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -33,7 +59,7 @@ describe('RootNavigator', () => {
   it('shows neither stack while the session is still unknown', async () => {
     mockUseAuth.mockReturnValue(sessionWith(AUTH_STATUSES.LOADING));
 
-    await render(<RootNavigator />);
+    await renderNavigator();
 
     expect(screen.queryByText('Welcome back')).toBeNull();
     expect(screen.queryByText('Signed-in area')).toBeNull();
@@ -42,7 +68,7 @@ describe('RootNavigator', () => {
   it('renders the auth stack when signed out', async () => {
     mockUseAuth.mockReturnValue(sessionWith(AUTH_STATUSES.SIGNED_OUT));
 
-    await render(<RootNavigator />);
+    await renderNavigator();
 
     expect(await screen.findByText('Welcome back')).toBeTruthy();
     expect(screen.queryByText('Signed-in area')).toBeNull();
@@ -51,7 +77,7 @@ describe('RootNavigator', () => {
   it('renders the app stack when signed in', async () => {
     mockUseAuth.mockReturnValue(sessionWith(AUTH_STATUSES.SIGNED_IN));
 
-    await render(<RootNavigator />);
+    await renderNavigator();
 
     expect(await screen.findByText('Signed-in area')).toBeTruthy();
     expect(screen.queryByText('Create an account')).toBeNull();
