@@ -1,13 +1,6 @@
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 
-import {
-  API_ERROR_CODES,
-  ApiError,
-  api,
-  configureAuthorization,
-  HTTP_METHODS,
-  request,
-} from './api';
+import { API_ERROR_CODES, ApiError, api, axiosInstance, configureAuthorization } from './api';
 
 const BASE_URL = 'http://localhost:3000';
 const PATH = '/auth/me';
@@ -30,7 +23,7 @@ const envelope = (code: string, extra: Record<string, unknown> = {}) => ({
  * stack React Native does not pick by default.
  */
 const respondWith = (status: number, data: unknown) => {
-  api.defaults.adapter = async (config) => {
+  axiosInstance.defaults.adapter = async (config) => {
     lastConfig = config;
     const response = { data, status, statusText: '', headers: {}, config } as AxiosResponse;
 
@@ -41,7 +34,7 @@ const respondWith = (status: number, data: unknown) => {
 };
 
 const failWithoutResponse = () => {
-  api.defaults.adapter = async (config) => {
+  axiosInstance.defaults.adapter = async (config) => {
     lastConfig = config;
 
     throw new AxiosError('Network Error', AxiosError.ERR_NETWORK, config, null);
@@ -52,30 +45,21 @@ beforeEach(() => {
   configureAuthorization(null);
 });
 
-describe('request', () => {
+describe('api.get', () => {
   it('prefixes the base URL and returns the parsed body', async () => {
     respondWith(OK_STATUS, { id: 'user-1' });
 
-    await expect(request(PATH)).resolves.toEqual({ id: 'user-1' });
+    await expect(api.get(PATH)).resolves.toEqual({ id: 'user-1' });
     expect(lastConfig.baseURL).toBe(BASE_URL);
     expect(lastConfig.url).toBe(PATH);
-  });
-
-  it('serializes the body and sets the JSON content type on a POST', async () => {
-    respondWith(OK_STATUS, {});
-
-    await request(PATH, { method: HTTP_METHODS.POST, body: { email: 'a@b.co' } });
-
-    expect(lastConfig.method).toBe('post');
-    expect(lastConfig.data).toBe(JSON.stringify({ email: 'a@b.co' }));
-    expect(lastConfig.headers.get('Content-Type')).toBe('application/json');
+    expect(lastConfig.method).toBe('get');
   });
 
   it('attaches the bearer token when a provider returns one', async () => {
     respondWith(OK_STATUS, {});
     configureAuthorization({ getAccessToken: () => TOKEN, onUnauthorized: jest.fn() });
 
-    await request(PATH);
+    await api.get(PATH);
 
     expect(lastConfig.headers.get('Authorization')).toBe(`Bearer ${TOKEN}`);
   });
@@ -84,7 +68,7 @@ describe('request', () => {
     respondWith(OK_STATUS, {});
     configureAuthorization({ getAccessToken: () => null, onUnauthorized: jest.fn() });
 
-    await request(PATH);
+    await api.get(PATH);
 
     expect(lastConfig.headers.get('Authorization')).toBeUndefined();
   });
@@ -92,7 +76,7 @@ describe('request', () => {
   it('returns null for a 204, which carries no body', async () => {
     respondWith(204, '');
 
-    await expect(request(PATH)).resolves.toBeNull();
+    await expect(api.get(PATH)).resolves.toBeNull();
   });
 
   it('turns the error envelope into an ApiError carrying code, details and traceId', async () => {
@@ -103,7 +87,7 @@ describe('request', () => {
       }),
     );
 
-    await expect(request(PATH)).rejects.toMatchObject({
+    await expect(api.get(PATH)).rejects.toMatchObject({
       status: 400,
       code: API_ERROR_CODES.VALIDATION_ERROR,
       details: [{ field: 'email', code: 'invalid_format' }],
@@ -114,7 +98,7 @@ describe('request', () => {
   it('still throws an ApiError when the error body is not the envelope', async () => {
     respondWith(502, '<html>bad gateway</html>');
 
-    await expect(request(PATH)).rejects.toMatchObject({
+    await expect(api.get(PATH)).rejects.toMatchObject({
       status: 502,
       code: API_ERROR_CODES.UNEXPECTED_RESPONSE,
     });
@@ -125,7 +109,7 @@ describe('request', () => {
     respondWith(401, envelope(API_ERROR_CODES.INVALID_ACCESS_TOKEN));
     configureAuthorization({ getAccessToken: () => TOKEN, onUnauthorized });
 
-    await expect(request(PATH)).rejects.toBeInstanceOf(ApiError);
+    await expect(api.get(PATH)).rejects.toBeInstanceOf(ApiError);
     expect(onUnauthorized).toHaveBeenCalledTimes(1);
   });
 
@@ -134,16 +118,59 @@ describe('request', () => {
     respondWith(401, envelope(API_ERROR_CODES.INVALID_CREDENTIALS));
     configureAuthorization({ getAccessToken: () => null, onUnauthorized });
 
-    await expect(request(PATH)).rejects.toBeInstanceOf(ApiError);
+    await expect(api.get(PATH)).rejects.toBeInstanceOf(ApiError);
     expect(onUnauthorized).not.toHaveBeenCalled();
   });
 
   it('turns a request that never got a response into a NETWORK_ERROR ApiError', async () => {
     failWithoutResponse();
 
-    await expect(request(PATH)).rejects.toMatchObject({
+    await expect(api.get(PATH)).rejects.toMatchObject({
       status: 0,
       code: API_ERROR_CODES.NETWORK_ERROR,
     });
+  });
+});
+
+describe('api.post', () => {
+  it('serializes the body and sets the JSON content type', async () => {
+    respondWith(OK_STATUS, {});
+
+    await api.post(PATH, { email: 'a@b.co' });
+
+    expect(lastConfig.method).toBe('post');
+    expect(lastConfig.data).toBe(JSON.stringify({ email: 'a@b.co' }));
+    expect(lastConfig.headers.get('Content-Type')).toBe('application/json');
+  });
+
+  it('posts with no body when none is given', async () => {
+    respondWith(OK_STATUS, {});
+
+    await api.post(PATH);
+
+    expect(lastConfig.method).toBe('post');
+    expect(lastConfig.data).toBeUndefined();
+  });
+});
+
+describe('api.patch', () => {
+  it('sends a PATCH with the given body', async () => {
+    respondWith(OK_STATUS, {});
+
+    await api.patch(PATH, { email: 'a@b.co' });
+
+    expect(lastConfig.method).toBe('patch');
+    expect(lastConfig.data).toBe(JSON.stringify({ email: 'a@b.co' }));
+  });
+});
+
+describe('api.delete', () => {
+  it('sends a DELETE with no body', async () => {
+    respondWith(OK_STATUS, {});
+
+    await api.delete(PATH);
+
+    expect(lastConfig.method).toBe('delete');
+    expect(lastConfig.data).toBeUndefined();
   });
 });

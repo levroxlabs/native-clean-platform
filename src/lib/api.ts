@@ -42,14 +42,15 @@ export const API_ERROR_CODES = {
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];
 
-export const HTTP_METHODS = {
+/** Internal only: each method on `api` below already fixes its own value. */
+const HTTP_METHODS = {
   GET: 'GET',
   POST: 'POST',
   PATCH: 'PATCH',
   DELETE: 'DELETE',
 } as const;
 
-export type HttpMethod = (typeof HTTP_METHODS)[keyof typeof HTTP_METHODS];
+type HttpMethod = (typeof HTTP_METHODS)[keyof typeof HTTP_METHODS];
 
 /** One entry of the API's `details` array on a 400. */
 export interface ValidationDetail {
@@ -65,11 +66,6 @@ export interface ErrorEnvelope {
     details?: ValidationDetail[];
     traceId: string;
   };
-}
-
-export interface RequestOptions {
-  method?: HttpMethod;
-  body?: unknown;
 }
 
 /** The pair of callbacks that ties this client to the session. */
@@ -141,15 +137,15 @@ const isErrorEnvelope = (body: unknown): body is ErrorEnvelope => {
 /**
  * Exported for the colocated test, which swaps `defaults.adapter` to exercise
  * these interceptors without a network. Deliberately **not** re-exported by
- * `index.ts`: outside this folder the only way in is `request()`, so the bearer
+ * `index.ts`: outside this folder the only way in is `api`, so the bearer
  * token and the error translation cannot be bypassed.
  */
-export const api = axios.create({
+export const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: REQUEST_TIMEOUT_MS,
 });
 
-api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = handlers?.getAccessToken() ?? null;
 
   if (token !== null) config.headers.set(AUTHORIZATION_HEADER, `${BEARER_PREFIX}${token}`);
@@ -199,14 +195,31 @@ const toApiError = (error: AxiosError): ApiError => {
   });
 };
 
-api.interceptors.response.use(undefined, (error: AxiosError) => Promise.reject(toApiError(error)));
+axiosInstance.interceptors.response.use(undefined, (error: AxiosError) =>
+  Promise.reject(toApiError(error)),
+);
 
-export const request = async <TResponse>(
+const send = async <TResponse>(
   path: string,
-  options: RequestOptions = {},
+  method: HttpMethod,
+  body?: unknown,
 ): Promise<TResponse> => {
-  const { method = HTTP_METHODS.GET, body } = options;
-  const response: AxiosResponse = await api.request({ url: path, method, data: body });
+  const response: AxiosResponse = await axiosInstance.request({ url: path, method, data: body });
 
   return (response.status === NO_CONTENT_STATUS ? null : response.data) as TResponse;
+};
+
+/**
+ * The only way into this client. One method per HTTP verb the app uses, so a
+ * call site never repeats which method it means — `api.post(path, body)`
+ * reads as what it does, instead of `request(path, { method: 'POST', body })`.
+ */
+export const api = {
+  get: <TResponse>(path: string): Promise<TResponse> => send<TResponse>(path, HTTP_METHODS.GET),
+  post: <TResponse>(path: string, body?: unknown): Promise<TResponse> =>
+    send<TResponse>(path, HTTP_METHODS.POST, body),
+  patch: <TResponse>(path: string, body?: unknown): Promise<TResponse> =>
+    send<TResponse>(path, HTTP_METHODS.PATCH, body),
+  delete: <TResponse>(path: string): Promise<TResponse> =>
+    send<TResponse>(path, HTTP_METHODS.DELETE),
 };

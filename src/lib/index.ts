@@ -3,13 +3,10 @@ export {
   ApiError,
   type ApiErrorCode,
   type AuthorizationHandlers,
+  api,
   CLIENT_FAILURE_STATUS,
   configureAuthorization,
   type ErrorEnvelope,
-  HTTP_METHODS,
-  type HttpMethod,
-  type RequestOptions,
-  request,
   type ValidationDetail,
 } from './api';
 export { startConnectivityWatch } from './connectivity';

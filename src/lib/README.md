@@ -6,11 +6,16 @@ e nada aqui conhece módulo de domínio: quando o cliente precisa de algo que s�
 um módulo sabe (o token da sessão), ele expõe um ponto de registro e o módulo
 se registra nele.
 
+## Constants (objeto)
+
+| Name  | Description |
+| ----- | ------------- |
+| `api` | `{ get, post, patch, delete }` — um método por verbo, cada um `(path, body?) => Promise<T>`. Único ponto de entrada do cliente. |
+
 ## Functions
 
 | Name                           | Description                                                     |
 | ------------------------------ | ---------------------------------------------------------------- |
-| `request<T>(path, options?)`   | Faz a requisição, devolve o corpo parseado, lança `ApiError` em qualquer falha. |
 | `configureAuthorization(h)`    | Registra `{ getAccessToken, onUnauthorized }`. Passe `null` para desregistrar. |
 | `startConnectivityWatch()`     | Liga o NetInfo ao `onlineManager` do TanStack Query. Chamado uma vez pelo `App.tsx`. |
 
@@ -36,11 +41,16 @@ se registra nele.
 
 - **É axios**, com `baseURL` e `timeout` na instância e dois interceptors: um
   põe o bearer token, o outro traduz qualquer falha para `ApiError`. Toda
-  chamada de rede do app passa por `request()`.
-- **A instância `api` não é reexportada pelo `index.ts`.** Ela é exportada de
-  `api.ts` só para o teste colocado trocar o `defaults.adapter`; de fora da
-  pasta o único caminho é `request()`, então não dá para escapar do token nem
-  da tradução de erro.
+  chamada de rede do app passa por `api.get/post/patch/delete`.
+- **`axiosInstance` (a instância crua do axios) não é reexportada pelo
+  `index.ts`.** Ela é exportada de `api.ts` só para o teste colocado trocar o
+  `defaults.adapter`; de fora da pasta o único caminho é o objeto `api`, então
+  não dá para escapar do token nem da tradução de erro.
+- **Um método por verbo, não uma função com `{ method, body }`.** Um call site
+  como `api.post('/auth/login', credentials)` diz o que faz sem repetir o
+  método; a versão anterior (`request(path, { method: 'POST', body })`) fazia
+  o chamador escrever o método toda vez que ele já era óbvio pela intenção da
+  chamada.
 - **`code` é contrato; `message` não é.** Trate por `code`; a `message` serve
   para log e debug e nunca vai crua para a tela. Um `code` desconhecido cai na
   copy genérica da tela — por isso `ApiError.code` é `string`, não uma união.

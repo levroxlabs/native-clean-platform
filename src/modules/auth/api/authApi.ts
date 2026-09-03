@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 
-import { API_ERROR_CODES, ApiError, CLIENT_FAILURE_STATUS, HTTP_METHODS, request } from '@/lib';
+import { API_ERROR_CODES, ApiError, api, CLIENT_FAILURE_STATUS } from '@/lib';
 
 import type { Credentials } from '../validations';
 import { loginResponseSchema, registerResponseSchema, type User, userSchema } from './schemas';
@@ -31,26 +31,20 @@ const parseOrThrow = <TSchema extends z.ZodType>(
 
 /** Issues no session — the caller must log in afterwards. Returns the new id. */
 export const register = async (credentials: Credentials): Promise<string> => {
-  const payload = await request('/auth/register', {
-    method: HTTP_METHODS.POST,
-    body: credentials,
-  });
+  const payload = await api.post('/auth/register', credentials);
 
   return parseOrThrow(registerResponseSchema, payload).id;
 };
 
 export const login = async (credentials: Credentials): Promise<string> => {
-  const payload = await request('/auth/login', {
-    method: HTTP_METHODS.POST,
-    body: credentials,
-  });
+  const payload = await api.post('/auth/login', credentials);
 
   return parseOrThrow(loginResponseSchema, payload).accessToken;
 };
 
 /** The only way the API offers to tell whether a stored token still verifies. */
 export const fetchMe = async (): Promise<User> => {
-  const payload = await request('/auth/me');
+  const payload = await api.get('/auth/me');
 
   return parseOrThrow(userSchema, payload);
 };
