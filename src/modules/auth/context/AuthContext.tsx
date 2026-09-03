@@ -11,7 +11,7 @@ import {
 
 import { reportError } from '@/errors';
 import { configureAuthorization } from '@/lib';
-import { fetchMe, login, refreshSession, register } from '../api/authApi';
+import { fetchMe, login, logout, logoutEverywhere, refreshSession, register } from '../api/authApi';
 import { AUTH_QUERY_KEYS } from '../constants';
 import { clearRefreshToken, readRefreshToken, writeRefreshToken } from '../storage';
 import type { AuthContextValue } from '../types';
@@ -200,10 +200,30 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     networkMode: 'always',
   });
 
-  const signOut = useCallback(async () => {
-    await endSession();
-    queryClient.clear();
-  }, [endSession, queryClient]);
+  const signOutMutation = useMutation({
+    mutationFn: async () => {
+      const stored = await readRefreshToken();
+
+      // Best effort: a failure here must not keep the user signed in. The local
+      // clear below removes the only copy of the token either way.
+      if (stored !== null) await logout(stored).catch(() => undefined);
+
+      await endSession();
+      queryClient.clear();
+    },
+    networkMode: 'always',
+  });
+
+  const signOutEverywhereMutation = useMutation({
+    mutationFn: async () => {
+      // Deliberately uncaught: the caller renders the failure and the session
+      // survives, so the user can retry or use the plain sign-out.
+      await logoutEverywhere();
+      await endSession();
+      queryClient.clear();
+    },
+    networkMode: 'always',
+  });
 
   // Gated on the token rather than read straight off the query: `endSession`
   // empties the cache outside React's render cycle, and an emptied cache
@@ -217,8 +237,10 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       user,
       signIn: signInMutation.mutateAsync,
       signUp: signUpMutation.mutateAsync,
-      signOut,
+      signOut: signOutMutation.mutateAsync,
+      signOutEverywhere: signOutEverywhereMutation.mutateAsync,
       isSubmitting: signInMutation.isPending || signUpMutation.isPending,
+      isSigningOut: signOutMutation.isPending || signOutEverywhereMutation.isPending,
     }),
     [
       hasCompletedBoot,
@@ -228,7 +250,10 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       signInMutation.isPending,
       signUpMutation.mutateAsync,
       signUpMutation.isPending,
-      signOut,
+      signOutMutation.mutateAsync,
+      signOutMutation.isPending,
+      signOutEverywhereMutation.mutateAsync,
+      signOutEverywhereMutation.isPending,
     ],
   );
 

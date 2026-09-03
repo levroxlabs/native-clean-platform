@@ -36,7 +36,9 @@ beforeEach(() => {
     signIn: mockSignIn,
     signUp: jest.fn(),
     signOut: jest.fn(),
+    signOutEverywhere: jest.fn(),
     isSubmitting: false,
+    isSigningOut: false,
   });
 });
 

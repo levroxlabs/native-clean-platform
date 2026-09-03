@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
 
 import { API_ERROR_CODES, ApiError } from '@/lib';
-import { fetchMe, login, refreshSession, register } from '../api/authApi';
+import { fetchMe, login, logout, logoutEverywhere, refreshSession, register } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
 import { clearRefreshToken, readRefreshToken, writeRefreshToken } from '../storage';
 import { AuthProvider } from './AuthContext';
@@ -12,6 +12,8 @@ jest.mock('../api/authApi');
 
 const mockFetchMe = fetchMe as jest.MockedFunction<typeof fetchMe>;
 const mockLogin = login as jest.MockedFunction<typeof login>;
+const mockLogout = logout as jest.MockedFunction<typeof logout>;
+const mockLogoutEverywhere = logoutEverywhere as jest.MockedFunction<typeof logoutEverywhere>;
 const mockRefreshSession = refreshSession as jest.MockedFunction<typeof refreshSession>;
 const mockRegister = register as jest.MockedFunction<typeof register>;
 
@@ -29,6 +31,7 @@ const PROFILE = {
 const SIGN_IN_LABEL = 'probe-sign-in';
 const SIGN_UP_LABEL = 'probe-sign-up';
 const SIGN_OUT_LABEL = 'probe-sign-out';
+const SIGN_OUT_EVERYWHERE_LABEL = 'probe-sign-out-everywhere';
 
 const networkFailure = () =>
   new ApiError({
@@ -40,7 +43,7 @@ const networkFailure = () =>
 const rotatedPair = { accessToken: ACCESS_TOKEN, refreshToken: ROTATED_REFRESH_TOKEN };
 
 const Probe = () => {
-  const { status, user, signIn, signUp, signOut } = useAuth();
+  const { status, user, signIn, signUp, signOut, signOutEverywhere } = useAuth();
 
   return (
     <>
@@ -66,6 +69,13 @@ const Probe = () => {
         }}
       >
         <Text>{SIGN_OUT_LABEL}</Text>
+      </Pressable>
+      <Pressable
+        onPress={() => {
+          void signOutEverywhere().catch(() => undefined);
+        }}
+      >
+        <Text>{SIGN_OUT_EVERYWHERE_LABEL}</Text>
       </Pressable>
     </>
   );
@@ -183,18 +193,62 @@ describe('AuthProvider', () => {
     expect(mockLogin).toHaveBeenCalledWith(CREDENTIALS);
   });
 
-  it('signs out, clearing both storage and the user', async () => {
+  const givenSignedIn = async () => {
     await writeRefreshToken(REFRESH_TOKEN);
     mockRefreshSession.mockResolvedValue(rotatedPair);
     mockFetchMe.mockResolvedValue(PROFILE);
 
     await renderAuth();
     await screen.findByText('status:signedIn');
+  };
+
+  it('signs out, revoking this device session on the server', async () => {
+    mockLogout.mockResolvedValue(undefined);
+    await givenSignedIn();
+
     await fireEvent.press(screen.getByText(SIGN_OUT_LABEL));
 
     expect(await screen.findByText('status:signedOut')).toBeTruthy();
     expect(await screen.findByText('user:none')).toBeTruthy();
+    // The token the rotation left behind, not the one boot started with.
+    expect(mockLogout).toHaveBeenCalledWith(ROTATED_REFRESH_TOKEN);
     await expect(readRefreshToken()).resolves.toBeNull();
+  });
+
+  it('still signs out locally when the logout call fails', async () => {
+    mockLogout.mockRejectedValue(networkFailure());
+    await givenSignedIn();
+
+    await fireEvent.press(screen.getByText(SIGN_OUT_LABEL));
+
+    // Trapping a user in a signed-in app because the device is offline is worse
+    // than a refresh token that stays live until it expires — and the local
+    // clear removes the only copy of it anyway.
+    expect(await screen.findByText('status:signedOut')).toBeTruthy();
+    await expect(readRefreshToken()).resolves.toBeNull();
+  });
+
+  it('signs out everywhere, ending the local session too', async () => {
+    mockLogoutEverywhere.mockResolvedValue(undefined);
+    await givenSignedIn();
+
+    await fireEvent.press(screen.getByText(SIGN_OUT_EVERYWHERE_LABEL));
+
+    expect(await screen.findByText('status:signedOut')).toBeTruthy();
+    expect(mockLogoutEverywhere).toHaveBeenCalledTimes(1);
+    await expect(readRefreshToken()).resolves.toBeNull();
+  });
+
+  it('keeps the session when signing out everywhere fails', async () => {
+    mockLogoutEverywhere.mockRejectedValue(networkFailure());
+    await givenSignedIn();
+
+    await fireEvent.press(screen.getByText(SIGN_OUT_EVERYWHERE_LABEL));
+
+    // The promise is EVERY device. Degrading to a local sign-out would tell the
+    // user their other sessions ended when they did not.
+    expect(await screen.findByText('status:signedIn')).toBeTruthy();
+    await expect(readRefreshToken()).resolves.toBe(ROTATED_REFRESH_TOKEN);
   });
 
   describe('while the connectivity watcher reports the device offline', () => {
