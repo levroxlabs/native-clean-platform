@@ -9,7 +9,8 @@ não substituem este arquivo.
 
 **Stack hoje:** Expo SDK 57 (managed) · React Native 0.86 · TypeScript 6 ·
 NativeWind v4 (Tailwind 3.4) · React Navigation 7 · TanStack Query 5 · axios ·
-react-hook-form 7 + zod 4 · expo-secure-store · Jest (jest-expo) +
+react-hook-form 7 + zod 4 · expo-secure-store · @react-native-community/netinfo ·
+Jest (jest-expo) +
 React Native Testing Library · Maestro · Biome · pnpm
 
 ---
@@ -63,9 +64,20 @@ src/
 │   ├── env.test.ts          colocado
 │   ├── index.ts
 │   └── README.md
+├── errors/                   uma resposta só para "o que acontece quando algo falha"
+│   ├── classify.ts          ERROR_KINDS + classifyError/isRetryable/shouldRetry
+│   ├── copy.ts              mapa base + registro por módulo → a frase que o usuário lê
+│   ├── reporter.ts          o seam entre o QueryCache.onError e o provider do toast
+│   ├── ErrorBoundary.tsx    a ÚNICA classe do código (React exige) + a tela de fallback
+│   ├── ErrorToast.tsx       context + provider + host, um slot só
+│   ├── useErrorToast.ts     { showError }
+│   ├── reporting.test.tsx   integração: query que falha chega ao toast
+│   ├── index.ts
+│   └── README.md
 ├── lib/                      I/O sem React — nem hook, nem contexto, nem componente
 │   ├── api.ts               instância axios + 2 interceptors, request(), ApiError, API_ERROR_CODES
 │   ├── api.test.ts          colocado — troca defaults.adapter para exercitar os interceptors
+│   ├── connectivity.ts      NetInfo → onlineManager: sem isso o RN "está sempre online"
 │   ├── index.ts             não reexporta a instância: de fora, só request()
 │   └── README.md
 ├── screens/                 telas que não pertencem a nenhum módulo específico
@@ -122,6 +134,7 @@ e as regras que atravessam pastas.
 | qualquer arquivo fora de `src/modules/<m>/` | só o que `src/modules/<m>/index.ts` exporta |
 | `src/modules/<m>/**` | nunca `src/modules/<outro>/**` |
 | `src/lib/**` | nada de React e nada de módulo — só rede, storage e afins |
+| `src/errors/**` | pode importar de `src/lib/`; nunca o contrário, e nunca um módulo |
 | `src/config/**` | nada além do ambiente; é folha, não importa ninguém |
 
 Um componente só sai de dentro de um módulo para `src/components/` quando um
@@ -185,6 +198,7 @@ a N projetos derivados. Estas falham em `pnpm check`:
 | `const REQUEST_TIMEOUT_MS = 5000` | `5000` solto no meio do código |
 | `bg-primary`, `text-content-muted` (semântico) | `bg-brand-500`, `text-neutral-900` (bruto) |
 | `import { X } from '@/theme'` | `import { X } from '../../theme'` |
+| `class ErrorBoundary extends Component` | Um boundary "funcional" — `getDerivedStateFromError` não existe como hook |
 | Dependência de app cravada em `~`/`^` (padrão Expo) | Editar manualmente uma versão fora do que `expo install` resolveria |
 
 ---
@@ -399,6 +413,17 @@ colocado troca `defaults.adapter` em vez de forçar o adapter `fetch`: em React
 Native o adapter padrão é o XHR, e testar contra outro seria testar uma pilha
 de rede que o app não usa.
 
+**O toast é componente nosso, não uma lib.** Nenhuma lib popular de toast do
+React Native estiliza por `className` — todas usam `StyleSheet`/props — então
+usar os tokens semânticos exigiria passar um componente de render customizado,
+ou seja, escrever o visual do mesmo jeito **e** carregar a dependência. Sobra
+para nós um slot, um timer e um fade.
+
+**`Animated` do core, não Reanimated,** para esse fade de 200ms. O Reanimated
+está instalado (o NativeWind v4 exige), mas usá-lo aqui traria o mock dele para
+os testes do toast sem nada em troca: ele ganha o lugar em interação por gesto
+a 60fps, não numa transição de opacidade.
+
 **Nome de rota é literal, não constante** (§6), o que faz a lista de parâmetros
 ser a única declaração de cada nome. Como esses nomes são PascalCase por
 convenção do React Navigation, o `biome.json` libera `typeProperty` em
@@ -425,5 +450,8 @@ não tiver, um `401 INVALID_ACCESS_TOKEN` encerra a sessão e o logout é local 
 o único ponto a mudar é `configureAuthorization`) · password reset ·
 verificação de e-mail · componente compartilhado em `src/components/` (vazio —
 nenhum segundo consumidor apareceu ainda) · `src/hooks/`, `src/store/`
-(criados só quando algo precisar deles, §1) · flow de E2E no Maestro ·
-fronteira de módulo verificada por lint/dependency-cruiser (§2).
+(criados só quando algo precisar deles, §1) · telemetria e crash reporting
+(nenhum sink: a camada de erros não reporta para lugar nenhum) · fila de toasts,
+swipe para dispensar e boundary por tela (§6 da spec da camada de erros) · flow
+de E2E no Maestro · fronteira de módulo verificada por lint/dependency-cruiser
+(§2).

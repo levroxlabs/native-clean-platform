@@ -12,6 +12,7 @@ se registra nele.
 | ------------------------------ | ---------------------------------------------------------------- |
 | `request<T>(path, options?)`   | Faz a requisição, devolve o corpo parseado, lança `ApiError` em qualquer falha. |
 | `configureAuthorization(h)`    | Registra `{ getAccessToken, onUnauthorized }`. Passe `null` para desregistrar. |
+| `startConnectivityWatch()`     | Liga o NetInfo ao `onlineManager` do TanStack Query. Chamado uma vez pelo `App.tsx`. |
 
 ## Constants
 
@@ -51,5 +52,8 @@ se registra nele.
   polyfill de `AbortSignal` com `abort-controller@3`, que não tem o método
   estático, mas o Node (e portanto o Jest) tem — o erro passaria em todos os
   testes e quebraria só no app.
+- **O React Native não tem `navigator.onLine`.** Sem `startConnectivityWatch()`,
+  o TanStack Query assume que o aparelho está sempre online: nunca pausa uma
+  query e gasta tentativas contra um rádio desligado.
 - `configureAuthorization` é o único ponto a mudar quando a API ganhar
   `POST /auth/refresh`.

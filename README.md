@@ -11,7 +11,9 @@ react-hook-form + zod · expo-secure-store · Biome · pnpm
 implementado contra os três endpoints de `/auth` de `api-clean-platform`:
 cadastro, login, restauração da sessão no boot, logout e gate de navegação.
 Refresh de token e logout no servidor ficam de fora porque a API ainda não tem
-esses endpoints.
+esses endpoints. Há também uma camada de erros: error boundary de render, toast
+global para falhas sem tela dona, copy compartilhada por `code` e queries que
+pausam quando o aparelho fica offline.
 
 > **Convenções de código** (como escrever) estão em **[AGENTS.md](AGENTS.md)**.
 > **Arquitetura** (o que existe, fronteiras entre módulos, decisões travadas e

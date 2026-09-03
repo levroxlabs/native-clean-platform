@@ -50,8 +50,13 @@ Fala com os três endpoints de `/auth` da API (`api-clean-platform`).
   o usuário de volta na tela de login.
 - **Um token que a API rejeitou é apagado; um token que falhou por rede não.**
   Estar offline no boot não é motivo para exigir a senha de novo no próximo.
-- **A `message` da API nunca vai para a tela.** A copy sai de `errorCopy.ts`,
-  escolhida pelo `code`; código desconhecido cai na mensagem genérica.
+- **A `message` da API nunca vai para a tela.** A copy sai de `@/errors`,
+  escolhida pelo `code`; este módulo registra só os seus dois códigos de domínio
+  em `AUTH_ERROR_COPY`, e o `App.tsx` os registra na camada de erros. Uma tela
+  renderizada isolada num teste não tem composition root, então registra o mesmo
+  mapa no `beforeEach` — sem isso ela cai no texto genérico em silêncio.
+- **O `/auth/me` do boot não é silencioso.** Se ele falhar por rede, o usuário vê
+  um toast de "sem conexão" em vez de cair no login sem explicação.
 - **Os schemas ficam em duas pastas por propósito diferente.**
   `validations/` valida o que o usuário digita (consumido pelo react-hook-form);
   `api/schemas.ts` valida o que a API devolve. Só o segundo é contrato de rede.

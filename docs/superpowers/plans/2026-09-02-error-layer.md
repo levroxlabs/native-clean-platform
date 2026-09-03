@@ -1252,7 +1252,7 @@ The code is done; this task makes the repository describe it honestly. Nothing h
 - Modify: `ARCHITECTURE.md`
 - Modify: `README.md`
 
-- [ ] **Step 1: Write `src/errors/README.md`**
+- [x] **Step 1: Write `src/errors/README.md`**
 
 ```md
 # Errors
@@ -1331,7 +1331,7 @@ tela, e captura de rejeição de promise fora do TanStack Query. O desenho está
 `docs/superpowers/specs/2026-09-02-error-layer-design.md`.
 ```
 
-- [ ] **Step 2: Update `src/lib/README.md`**
+- [x] **Step 2: Update `src/lib/README.md`**
 
 Add to the `## Functions` table:
 
@@ -1347,7 +1347,7 @@ And add to `## Conventions`:
   query e gasta tentativas contra um rádio desligado.
 ```
 
-- [ ] **Step 3: Update `src/modules/auth/README.md`**
+- [x] **Step 3: Update `src/modules/auth/README.md`**
 
 Replace the bullet that says the API `message` never reaches the screen with:
 
@@ -1359,7 +1359,7 @@ Replace the bullet that says the API `message` never reaches the screen with:
   vê um toast de "sem conexão" em vez de cair no login sem explicação.
 ```
 
-- [ ] **Step 4: Update `ARCHITECTURE.md`**
+- [x] **Step 4: Update `ARCHITECTURE.md`**
 
 1. **Stack hoje** — append ` · @react-native-community/netinfo` to the list.
 
@@ -1407,11 +1407,11 @@ a 60fps, não numa transição de opacidade.
 
 6. **§10** — remove `estados de erro e loading` from the list, and make the telemetry absence explicit by adding `telemetria e crash reporting (nenhum sink; a camada de erros não reporta para lugar nenhum)`.
 
-- [ ] **Step 5: Update `README.md`**
+- [x] **Step 5: Update `README.md`**
 
 In **Roadmap**, the `Polimento` item keeps only the adoption guide; error and loading states are done. Add a line to **Status** saying the app has a global error layer with boundary, toast and offline-aware queries.
 
-- [ ] **Step 6: Verify and commit**
+- [x] **Step 6: Verify and commit**
 
 ```bash
 pnpm check && pnpm test:ci
