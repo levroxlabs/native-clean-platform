@@ -49,7 +49,13 @@ export const ErrorToastProvider = ({ children }: PropsWithChildren) => {
       toValue: HIDDEN_OPACITY,
       duration: FADE_DURATION_MS,
       useNativeDriver: true,
-    }).start(() => setMessage(null));
+    }).start(({ finished }) => {
+      // A fresh `showError` interrupts this same Animated.Value to fade back
+      // in, which still resolves this callback — with `finished: false`. Only
+      // an uninterrupted fade-out means the toast that was showing is really
+      // gone; otherwise this would clear the message the new error just set.
+      if (finished) setMessage(null);
+    });
   }, [clearDismissTimeout, opacity]);
 
   const showError = useCallback(

@@ -4,6 +4,8 @@ import { type Metrics, SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { API_ERROR_CODES, ApiError } from '@/lib';
 
+const FADE_DURATION_MS = 200;
+
 import { registerErrorCopy, resetErrorCopy } from './copy';
 import { ErrorToastProvider } from './ErrorToast';
 import { reportError } from './reporter';
@@ -53,6 +55,24 @@ const withProviders = (error: unknown) => (
 );
 
 const renderWithProvider = async (error: unknown) => render(withProviders(error));
+
+const FIRST_TRIGGER_LABEL = 'trigger-first';
+const SECOND_TRIGGER_LABEL = 'trigger-second';
+
+const TwoTriggers = ({ first, second }: { first: unknown; second: unknown }) => {
+  const { showError } = useErrorToast();
+
+  return (
+    <>
+      <Pressable onPress={() => showError(first)}>
+        <Text>{FIRST_TRIGGER_LABEL}</Text>
+      </Pressable>
+      <Pressable onPress={() => showError(second)}>
+        <Text>{SECOND_TRIGGER_LABEL}</Text>
+      </Pressable>
+    </>
+  );
+};
 
 beforeEach(() => {
   resetErrorCopy();
@@ -107,6 +127,36 @@ describe('ErrorToastProvider', () => {
     await waitFor(() => {
       expect(screen.queryByText(OFFLINE_COPY)).toBeNull();
     });
+  });
+
+  it('keeps a message shown mid-dismissal, instead of a stale fade-out wiping it', async () => {
+    // hide() re-fades the SAME Animated.Value that a fresh showError() call
+    // fades back in. Interrupting the fade-out mid-flight still resolves its
+    // own .start() callback — with { finished: false } — so a naive callback
+    // that ignores that flag clears the message the second error just set.
+    registerErrorCopy({ SECOND_CODE: 'the second problem' });
+    const second = new ApiError({ status: 400, code: 'SECOND_CODE', message: 'x' });
+
+    await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <ErrorToastProvider>
+          <TwoTriggers first={offlineError} second={second} />
+        </ErrorToastProvider>
+      </SafeAreaProvider>,
+    );
+
+    await fireEvent.press(screen.getByText(FIRST_TRIGGER_LABEL));
+    await screen.findByText(OFFLINE_COPY);
+
+    // Dismiss the first message (starts its 200ms fade-out) and immediately
+    // report the second, interrupting that fade-out before it finishes.
+    await fireEvent.press(screen.getByText(OFFLINE_COPY));
+    await fireEvent.press(screen.getByText(SECOND_TRIGGER_LABEL));
+
+    // Give the interrupted fade-out's callback time to fire.
+    await new Promise((resolve) => setTimeout(resolve, FADE_DURATION_MS + 100));
+
+    expect(screen.getByText('the second problem')).toBeTruthy();
   });
 
   it('registers itself as the reporter while mounted', async () => {
