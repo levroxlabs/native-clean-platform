@@ -21,6 +21,7 @@ const COPY = {
   submitLabel: 'Sign in',
   switchToSignUp: 'Create an account',
   switchToVerifyEmail: 'I already have a code',
+  forgotPassword: 'Forgot your password?',
 } as const;
 
 /** Checked against `Credentials` by `Path<T>`, so a typo here is a compile error. */
@@ -77,6 +78,13 @@ export const SignInScreen = ({ navigation, route }: SignInScreenProps) => {
       )}
 
       <SubmitButton isPending={isSubmitting} label={COPY.submitLabel} onPress={submit} />
+
+      <Pressable
+        className="mt-4 items-center"
+        onPress={() => navigation.navigate('ForgotPassword')}
+      >
+        <Text className="text-sm text-primary">{COPY.forgotPassword}</Text>
+      </Pressable>
 
       <Pressable className="mt-4 items-center" onPress={() => navigation.navigate('SignUp')}>
         <Text className="text-sm text-primary">{COPY.switchToSignUp}</Text>

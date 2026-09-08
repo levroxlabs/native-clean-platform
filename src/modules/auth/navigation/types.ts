@@ -4,4 +4,7 @@ export type AuthStackParamList = {
   SignUp: undefined;
   /** `email` present means a code was just sent, which starts the resend countdown. */
   VerifyEmail: { email?: string } | undefined;
+  ForgotPassword: undefined;
+  /** Carried for the sign-in form afterwards; the reset body itself has no email. */
+  ResetPassword: { email: string };
 };

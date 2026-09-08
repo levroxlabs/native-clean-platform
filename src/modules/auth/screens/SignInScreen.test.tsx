@@ -55,6 +55,13 @@ const fillAndSubmit = async (email: string, password: string) => {
 };
 
 describe('SignInScreen', () => {
+  it('offers a way into password recovery', async () => {
+    await renderScreen();
+    await fireEvent.press(screen.getByText('Forgot your password?'));
+
+    expect(navigation.navigate).toHaveBeenCalledWith('ForgotPassword');
+  });
+
   it('offers a way to the code screen for a sign-up that was interrupted', async () => {
     await renderScreen();
     await fireEvent.press(screen.getByText('I already have a code'));
