@@ -3,13 +3,7 @@ import type { z } from 'zod';
 import { API_ERROR_CODES, ApiError, api, CLIENT_FAILURE_STATUS } from '@/lib';
 
 import type { Credentials } from '../validations';
-import {
-  registerResponseSchema,
-  type SessionTokens,
-  sessionTokensSchema,
-  type User,
-  userSchema,
-} from './schemas';
+import { type SessionTokens, sessionTokensSchema, type User, userSchema } from './schemas';
 
 const CONTRACT_DRIFT_MESSAGE = 'The API response did not match the expected shape:';
 
@@ -36,13 +30,6 @@ const parseOrThrow = <TSchema extends z.ZodType>(
   }
 
   return parsed.data;
-};
-
-/** Issues no session — the caller must log in afterwards. Returns the new id. */
-export const register = async (credentials: Credentials): Promise<string> => {
-  const payload = await api.post('/auth/register', credentials);
-
-  return parseOrThrow(registerResponseSchema, payload).id;
 };
 
 export const login = async (credentials: Credentials): Promise<SessionTokens> => {

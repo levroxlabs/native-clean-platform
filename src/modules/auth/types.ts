@@ -14,7 +14,6 @@ export interface AuthContextValue {
   user: User | null;
   /** Rejects with an `ApiError`; screens catch it and map `code` to copy. */
   signIn: (credentials: Credentials) => Promise<void>;
-  signUp: (credentials: Credentials) => Promise<void>;
   /**
    * Redeems the emailed code together with the chosen password. This is what
    * CREATES the account and opens the session — nothing logs in afterwards.

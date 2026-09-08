@@ -11,7 +11,6 @@ import {
   logout,
   logoutEverywhere,
   refreshSession,
-  register,
 } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
 import { clearRefreshToken, readRefreshToken, writeRefreshToken } from '../storage';
@@ -24,7 +23,6 @@ const mockLogin = login as jest.MockedFunction<typeof login>;
 const mockLogout = logout as jest.MockedFunction<typeof logout>;
 const mockLogoutEverywhere = logoutEverywhere as jest.MockedFunction<typeof logoutEverywhere>;
 const mockRefreshSession = refreshSession as jest.MockedFunction<typeof refreshSession>;
-const mockRegister = register as jest.MockedFunction<typeof register>;
 const mockConfirmSignUp = confirmSignUp as jest.MockedFunction<typeof confirmSignUp>;
 const mockChangePassword = changePassword as jest.MockedFunction<typeof changePassword>;
 
@@ -52,7 +50,6 @@ const PROFILE = {
 };
 
 const SIGN_IN_LABEL = 'probe-sign-in';
-const SIGN_UP_LABEL = 'probe-sign-up';
 const CONFIRM_SIGN_UP_LABEL = 'probe-confirm-sign-up';
 const CHANGE_PASSWORD_LABEL = 'probe-change-password';
 const SIGN_OUT_LABEL = 'probe-sign-out';
@@ -72,7 +69,6 @@ const Probe = () => {
     status,
     user,
     signIn,
-    signUp,
     confirmSignUp: confirmSignUpAction,
     changePassword: changePasswordAction,
     signOut,
@@ -89,13 +85,6 @@ const Probe = () => {
         }}
       >
         <Text>{SIGN_IN_LABEL}</Text>
-      </Pressable>
-      <Pressable
-        onPress={() => {
-          void signUp(CREDENTIALS).catch(() => undefined);
-        }}
-      >
-        <Text>{SIGN_UP_LABEL}</Text>
       </Pressable>
       <Pressable
         onPress={() => {
@@ -225,20 +214,6 @@ describe('AuthProvider', () => {
 
     expect(await screen.findByText('status:signedIn')).toBeTruthy();
     await expect(readRefreshToken()).resolves.toBe(REFRESH_TOKEN);
-  });
-
-  it('signs up by registering and then logging in, because register issues no session', async () => {
-    mockRegister.mockResolvedValue(PROFILE.id);
-    mockLogin.mockResolvedValue({ accessToken: ACCESS_TOKEN, refreshToken: REFRESH_TOKEN });
-    mockFetchMe.mockResolvedValue(PROFILE);
-
-    await renderAuth();
-    await screen.findByText('status:signedOut');
-    await fireEvent.press(screen.getByText(SIGN_UP_LABEL));
-
-    expect(await screen.findByText('status:signedIn')).toBeTruthy();
-    expect(mockRegister).toHaveBeenCalledWith(CREDENTIALS);
-    expect(mockLogin).toHaveBeenCalledWith(CREDENTIALS);
   });
 
   it('confirms the sign-up, which creates the account and opens the session', async () => {

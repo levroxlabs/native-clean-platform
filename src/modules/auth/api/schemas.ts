@@ -3,8 +3,6 @@ import { z } from 'zod';
 /** Presence, not shape: the client has no business asserting JWT structure. */
 const MIN_TOKEN_LENGTH = 1;
 
-export const registerResponseSchema = z.object({ id: z.uuid() });
-
 /**
  * What `login` and `refresh` both answer.
  *

@@ -1,90 +1,90 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { registerErrorCopy, resetErrorCopy } from '@/errors';
 import { API_ERROR_CODES, ApiError } from '@/lib';
 
+import { startSignUp } from '../api/authApi';
 import { AUTH_ERROR_COPY } from '../errorCopy';
-
-import { useAuth } from '../hooks/useAuth';
 import { SignUpScreen } from './SignUpScreen';
 
-jest.mock('../hooks/useAuth');
+jest.mock('../api/authApi');
 
-const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
+const mockStartSignUp = startSignUp as jest.MockedFunction<typeof startSignUp>;
 
 const EMAIL_LABEL = 'Email';
-const PASSWORD_LABEL = 'Password';
-const SUBMIT_LABEL = 'Create account';
+const SUBMIT_LABEL = 'Send the code';
 
 const VALID_EMAIL = 'user@example.com';
-const VALID_PASSWORD = 'sup3rS3cret!';
+const TAKEN_EMAIL = 'taken@example.com';
 
-const navigation = { navigate: jest.fn(), goBack: jest.fn() };
-
-const mockSignUp = jest.fn();
+const navigation = { navigate: jest.fn() };
 
 beforeEach(() => {
   jest.clearAllMocks();
-  // The copy for this module's own codes lives behind a registration that
-  // App.tsx performs at boot. A screen rendered on its own has no composition
-  // root, so it registers the same map the app would.
   resetErrorCopy();
   registerErrorCopy(AUTH_ERROR_COPY);
-  mockUseAuth.mockReturnValue({
-    status: 'signedOut',
-    user: null,
-    signIn: jest.fn(),
-    signUp: mockSignUp,
-    confirmSignUp: jest.fn(),
-    changePassword: jest.fn(),
-    signOut: jest.fn(),
-    signOutEverywhere: jest.fn(),
-    isSubmitting: false,
-    isSigningOut: false,
-  });
 });
 
 const renderScreen = async () =>
   render(
-    <SignUpScreen navigation={navigation as never} route={{ key: 'k', name: 'SignUp' } as never} />,
+    <QueryClientProvider client={new QueryClient()}>
+      <SignUpScreen
+        navigation={navigation as never}
+        route={{ key: 'k', name: 'SignUp' } as never}
+      />
+    </QueryClientProvider>,
   );
 
-const fillAndSubmit = async (email: string, password: string) => {
+const fillAndSubmit = async (email: string) => {
   await fireEvent.changeText(screen.getByLabelText(EMAIL_LABEL), email);
-  await fireEvent.changeText(screen.getByLabelText(PASSWORD_LABEL), password);
   await fireEvent.press(screen.getByText(SUBMIT_LABEL));
 };
 
 describe('SignUpScreen', () => {
-  it('enforces the API password policy before submitting', async () => {
+  it('does not submit a malformed email', async () => {
     await renderScreen();
-    await fillAndSubmit(VALID_EMAIL, 'password');
+    await fillAndSubmit('not-an-email');
 
-    expect(mockSignUp).not.toHaveBeenCalled();
+    expect(mockStartSignUp).not.toHaveBeenCalled();
   });
 
-  it('submits a password that satisfies the policy', async () => {
-    mockSignUp.mockResolvedValue(undefined);
+  it('sends the address alone and moves to the code screen', async () => {
+    mockStartSignUp.mockResolvedValue(undefined);
 
     await renderScreen();
-    await fillAndSubmit(VALID_EMAIL, VALID_PASSWORD);
+    await fillAndSubmit(VALID_EMAIL);
 
-    expect(mockSignUp).toHaveBeenCalledWith({ email: VALID_EMAIL, password: VALID_PASSWORD });
+    expect(mockStartSignUp).toHaveBeenCalledWith(VALID_EMAIL);
+    expect(navigation.navigate).toHaveBeenCalledWith('VerifyEmail', { email: VALID_EMAIL });
   });
 
-  it('puts a server field error on the field it belongs to', async () => {
-    mockSignUp.mockRejectedValue(
+  it('advances for an address that already has an account, exactly as for a free one', async () => {
+    // The API answers 202 to both. A branch here would rebuild the account
+    // enumeration it deliberately removed.
+    mockStartSignUp.mockResolvedValue(undefined);
+
+    await renderScreen();
+    await fillAndSubmit(TAKEN_EMAIL);
+
+    expect(navigation.navigate).toHaveBeenCalledWith('VerifyEmail', { email: TAKEN_EMAIL });
+  });
+
+  it('stays put and reports the failure when the request does not reach the API', async () => {
+    mockStartSignUp.mockRejectedValue(
       new ApiError({
-        status: 400,
-        code: API_ERROR_CODES.VALIDATION_ERROR,
-        message: 'Invalid payload',
-        details: [{ field: 'email', code: 'invalid_format' }],
+        status: 0,
+        code: API_ERROR_CODES.NETWORK_ERROR,
+        message: 'never rendered',
       }),
     );
 
     await renderScreen();
-    await fillAndSubmit(VALID_EMAIL, VALID_PASSWORD);
+    await fillAndSubmit(VALID_EMAIL);
 
-    expect(await screen.findByText('The server rejected this value.')).toBeTruthy();
+    expect(
+      await screen.findByText('Could not reach the server. Check your connection.'),
+    ).toBeTruthy();
+    expect(navigation.navigate).not.toHaveBeenCalled();
   });
 });

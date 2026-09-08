@@ -1,12 +1,15 @@
 import { z } from 'zod';
 
-import { emailSchema, newPasswordSchema, submittedPasswordSchema } from './policy';
+import { emailSchema, submittedPasswordSchema } from './policy';
 
-/** Registration enforces the policy the API publishes. */
-export const signUpSchema = z.object({
-  email: emailSchema,
-  password: newPasswordSchema,
-});
+/**
+ * Step 1 of sign-up takes the address alone. The password is chosen at
+ * confirmation, where the API requires it: the code reaches only the owner of
+ * the address, so whoever confirms is whoever chooses the password. Collecting
+ * it here would also mean a plaintext password sitting in navigation state
+ * until step 3.
+ */
+export const signUpSchema = z.object({ email: emailSchema });
 
 /**
  * Sign-in checks presence, not policy — the same choice the API makes and for

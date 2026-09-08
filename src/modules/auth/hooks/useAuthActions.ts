@@ -7,7 +7,6 @@ import {
   login,
   logout,
   logoutEverywhere,
-  register,
 } from '../api/authApi';
 import { readRefreshToken } from '../storage';
 import type { ChangePasswordValues, ConfirmSignUpValues, Credentials } from '../validations';
@@ -15,7 +14,6 @@ import type { AuthSessionValue } from './useAuthSession';
 
 export interface AuthActionsValue {
   signIn: (credentials: Credentials) => Promise<void>;
-  signUp: (credentials: Credentials) => Promise<void>;
   confirmSignUp: (values: ConfirmSignUpValues) => Promise<void>;
   changePassword: (values: ChangePasswordValues) => Promise<void>;
   signOut: () => Promise<void>;
@@ -52,17 +50,6 @@ export const useAuthActions = ({
   );
 
   const signInMutation = useMutation({ mutationFn: establishSession, networkMode: 'always' });
-
-  const signUpMutation = useMutation({
-    mutationFn: async (credentials: Credentials) => {
-      // `POST /auth/register` answers 201 { id } and issues no session, so the
-      // login is not optional: without it, creating an account would drop the
-      // user straight back onto the sign-in screen.
-      await register(credentials);
-      await establishSession(credentials);
-    },
-    networkMode: 'always',
-  });
 
   const confirmSignUpMutation = useMutation({
     mutationFn: async ({ email, code, password }: ConfirmSignUpValues) => {
@@ -114,14 +101,12 @@ export const useAuthActions = ({
   return useMemo(
     () => ({
       signIn: signInMutation.mutateAsync,
-      signUp: signUpMutation.mutateAsync,
       confirmSignUp: confirmSignUpMutation.mutateAsync,
       changePassword: changePasswordMutation.mutateAsync,
       signOut: signOutMutation.mutateAsync,
       signOutEverywhere: signOutEverywhereMutation.mutateAsync,
       isSubmitting:
         signInMutation.isPending ||
-        signUpMutation.isPending ||
         confirmSignUpMutation.isPending ||
         changePasswordMutation.isPending,
       isSigningOut: signOutMutation.isPending || signOutEverywhereMutation.isPending,
@@ -129,8 +114,6 @@ export const useAuthActions = ({
     [
       signInMutation.mutateAsync,
       signInMutation.isPending,
-      signUpMutation.mutateAsync,
-      signUpMutation.isPending,
       confirmSignUpMutation.mutateAsync,
       confirmSignUpMutation.isPending,
       changePasswordMutation.mutateAsync,

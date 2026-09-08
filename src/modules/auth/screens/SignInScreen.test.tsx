@@ -34,7 +34,6 @@ beforeEach(() => {
     status: 'signedOut',
     user: null,
     signIn: mockSignIn,
-    signUp: jest.fn(),
     confirmSignUp: jest.fn(),
     changePassword: jest.fn(),
     signOut: jest.fn(),
@@ -56,6 +55,13 @@ const fillAndSubmit = async (email: string, password: string) => {
 };
 
 describe('SignInScreen', () => {
+  it('offers a way to the code screen for a sign-up that was interrupted', async () => {
+    await renderScreen();
+    await fireEvent.press(screen.getByText('I already have a code'));
+
+    expect(navigation.navigate).toHaveBeenCalledWith('VerifyEmail');
+  });
+
   it('does not submit a malformed email', async () => {
     await renderScreen();
     await fillAndSubmit('not-an-email', VALID_PASSWORD);

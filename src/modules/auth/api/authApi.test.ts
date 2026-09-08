@@ -8,7 +8,6 @@ import {
   logout,
   logoutEverywhere,
   refreshSession,
-  register,
   requestPasswordReset,
   resendVerificationCode,
   resetPassword,
@@ -40,15 +39,6 @@ const PROFILE = {
 beforeEach(() => {
   mockApi.get.mockReset();
   mockApi.post.mockReset();
-});
-
-describe('register', () => {
-  it('posts the credentials and returns the new user id', async () => {
-    mockApi.post.mockResolvedValue({ id: USER_ID });
-
-    await expect(register(CREDENTIALS)).resolves.toBe(USER_ID);
-    expect(mockApi.post).toHaveBeenCalledWith('/auth/register', CREDENTIALS);
-  });
 });
 
 describe('login', () => {

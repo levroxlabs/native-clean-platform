@@ -20,6 +20,7 @@ const COPY = {
   passwordLabel: 'Password',
   submitLabel: 'Sign in',
   switchToSignUp: 'Create an account',
+  switchToVerifyEmail: 'I already have a code',
 } as const;
 
 /** Checked against `Credentials` by `Path<T>`, so a typo here is a compile error. */
@@ -29,12 +30,14 @@ const EMPTY_FORM: Credentials = { email: '', password: '' };
 
 type SignInScreenProps = NativeStackScreenProps<AuthStackParamList, 'SignIn'>;
 
-export const SignInScreen = ({ navigation }: SignInScreenProps) => {
+export const SignInScreen = ({ navigation, route }: SignInScreenProps) => {
   const { signIn, isSubmitting } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
   const { control, handleSubmit, setError } = useForm<Credentials>({
     resolver: zodResolver(signInSchema),
-    defaultValues: EMPTY_FORM,
+    // A password reset lands here with the address it started from: the reset
+    // revoked every session, so signing in again is not optional.
+    defaultValues: { ...EMPTY_FORM, email: route.params?.email ?? EMPTY_FORM.email },
   });
 
   const submit = handleSubmit(async (credentials) => {
@@ -77,6 +80,12 @@ export const SignInScreen = ({ navigation }: SignInScreenProps) => {
 
       <Pressable className="mt-4 items-center" onPress={() => navigation.navigate('SignUp')}>
         <Text className="text-sm text-primary">{COPY.switchToSignUp}</Text>
+      </Pressable>
+
+      {/* A sign-up interrupted between the code email and this screen has no
+          other way back: the code is already in the inbox. */}
+      <Pressable className="mt-4 items-center" onPress={() => navigation.navigate('VerifyEmail')}>
+        <Text className="text-sm text-primary">{COPY.switchToVerifyEmail}</Text>
       </Pressable>
     </View>
   );

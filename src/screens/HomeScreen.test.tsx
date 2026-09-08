@@ -29,7 +29,6 @@ const givenSession = (overrides: Partial<ReturnType<typeof useAuth>> = {}) => {
     status: 'signedIn',
     user: null,
     signIn: jest.fn(),
-    signUp: jest.fn(),
     confirmSignUp: jest.fn(),
     changePassword: jest.fn(),
     signOut,
