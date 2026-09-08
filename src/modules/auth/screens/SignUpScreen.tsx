@@ -21,6 +21,9 @@ const COPY = {
   switchToSignIn: 'I already have an account',
 } as const;
 
+/** Checked against `Credentials` by `Path<T>`, so a typo here is a compile error. */
+const FIELDS = ['email', 'password'] as const;
+
 const EMPTY_FORM: Credentials = { email: '', password: '' };
 
 type SignUpScreenProps = NativeStackScreenProps<AuthStackParamList, 'SignUp'>;
@@ -39,7 +42,7 @@ export const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
     try {
       await signUp(credentials);
     } catch (error) {
-      applyServerFieldErrors(error, setError);
+      applyServerFieldErrors(error, setError, FIELDS);
       setFormError(copyForError(error));
     }
   });
