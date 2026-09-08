@@ -23,6 +23,12 @@ describe('copyForError', () => {
     );
   });
 
+  it('phrases a rate limit as something to try again shortly', () => {
+    expect(copyForError(apiError(API_ERROR_CODES.TOO_MANY_REQUESTS))).toBe(
+      'Too many attempts. Please wait a moment and try again.',
+    );
+  });
+
   it('falls back for a code nobody registered', () => {
     expect(copyForError(apiError('A_CODE_SHIPPED_LATER'))).toBe(FALLBACK);
   });

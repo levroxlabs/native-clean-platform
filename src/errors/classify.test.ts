@@ -35,10 +35,16 @@ describe('classifyError', () => {
     expect(classifyError(apiError(400, API_ERROR_CODES.VALIDATION_ERROR))).toBe(ERROR_KINDS.INPUT);
   });
 
-  it('calls a conflict input', () => {
-    expect(classifyError(apiError(409, API_ERROR_CODES.EMAIL_ALREADY_IN_USE))).toBe(
+  it('calls a rejected current password input', () => {
+    expect(classifyError(apiError(422, API_ERROR_CODES.INVALID_CURRENT_PASSWORD))).toBe(
       ERROR_KINDS.INPUT,
     );
+  });
+
+  it('calls a rate limit input, so nothing retries it automatically', () => {
+    // Retrying a 429 is what produced it. `INPUT` is the only kind that is
+    // neither retried nor treated as a dead session, which is exactly right.
+    expect(classifyError(apiError(429, API_ERROR_CODES.TOO_MANY_REQUESTS))).toBe(ERROR_KINDS.INPUT);
   });
 
   it('calls a rejected refresh token a session error', () => {

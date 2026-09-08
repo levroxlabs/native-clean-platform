@@ -30,7 +30,6 @@ export const API_ERROR_CODES = {
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
   INVALID_ACCESS_TOKEN: 'INVALID_ACCESS_TOKEN',
   INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
-  EMAIL_ALREADY_IN_USE: 'EMAIL_ALREADY_IN_USE',
   USER_NOT_FOUND: 'USER_NOT_FOUND',
   INVALID_EMAIL: 'INVALID_EMAIL',
   INVALID_PASSWORD: 'INVALID_PASSWORD',
@@ -41,6 +40,22 @@ export const API_ERROR_CODES = {
    * The whole session family is already revoked by the time this arrives.
    */
   REFRESH_TOKEN_REUSED: 'REFRESH_TOKEN_REUSED',
+  /** The API rejected the request for exceeding a per-IP ceiling. Arrives as a 429. */
+  TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
+  /** 403 on login: the password was right, the account is not verified. */
+  EMAIL_NOT_VERIFIED: 'EMAIL_NOT_VERIFIED',
+  /**
+   * 422 from `/auth/email/verify`. One code for every failure mode — unknown,
+   * wrong, expired, attempts exhausted — so the client cannot build an oracle
+   * the API deliberately refused to give it.
+   */
+  EMAIL_VERIFICATION_FAILED: 'EMAIL_VERIFICATION_FAILED',
+  /** 422 from `/auth/password/reset`. One code for every token failure, as above. */
+  PASSWORD_RESET_FAILED: 'PASSWORD_RESET_FAILED',
+  /** 422 from `/auth/password`: the current password did not match. */
+  INVALID_CURRENT_PASSWORD: 'INVALID_CURRENT_PASSWORD',
+  /** 422 from `/auth/password`: the new password equals the current one. */
+  PASSWORD_UNCHANGED: 'PASSWORD_UNCHANGED',
   /** A database conflict that survived the API's own retries. Arrives as a 503. */
   TRANSACTION_CONFLICT: 'TRANSACTION_CONFLICT',
   /** Client-side: the request never reached the API. */

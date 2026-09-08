@@ -70,21 +70,6 @@ describe('SignUpScreen', () => {
     expect(mockSignUp).toHaveBeenCalledWith({ email: VALID_EMAIL, password: VALID_PASSWORD });
   });
 
-  it('shows the conflict copy when the email is taken', async () => {
-    mockSignUp.mockRejectedValue(
-      new ApiError({
-        status: 409,
-        code: API_ERROR_CODES.EMAIL_ALREADY_IN_USE,
-        message: 'Email already in use',
-      }),
-    );
-
-    await renderScreen();
-    await fillAndSubmit(VALID_EMAIL, VALID_PASSWORD);
-
-    expect(await screen.findByText('This email is already registered.')).toBeTruthy();
-  });
-
   it('puts a server field error on the field it belongs to', async () => {
     mockSignUp.mockRejectedValue(
       new ApiError({
