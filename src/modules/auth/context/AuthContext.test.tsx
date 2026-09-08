@@ -1,9 +1,18 @@
 import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
 
 import { API_ERROR_CODES, ApiError } from '@/lib';
-import { fetchMe, login, logout, logoutEverywhere, refreshSession, register } from '../api/authApi';
+import {
+  changePassword,
+  confirmSignUp,
+  fetchMe,
+  login,
+  logout,
+  logoutEverywhere,
+  refreshSession,
+  register,
+} from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
 import { clearRefreshToken, readRefreshToken, writeRefreshToken } from '../storage';
 import { AuthProvider } from './AuthContext';
@@ -16,10 +25,24 @@ const mockLogout = logout as jest.MockedFunction<typeof logout>;
 const mockLogoutEverywhere = logoutEverywhere as jest.MockedFunction<typeof logoutEverywhere>;
 const mockRefreshSession = refreshSession as jest.MockedFunction<typeof refreshSession>;
 const mockRegister = register as jest.MockedFunction<typeof register>;
+const mockConfirmSignUp = confirmSignUp as jest.MockedFunction<typeof confirmSignUp>;
+const mockChangePassword = changePassword as jest.MockedFunction<typeof changePassword>;
 
 const ACCESS_TOKEN = 'a-signed-token';
 const REFRESH_TOKEN = 'a-refresh-token';
 const ROTATED_REFRESH_TOKEN = 'the-next-refresh-token';
+const REPLACEMENT_REFRESH_TOKEN = 'the-refresh-token-the-password-change-issued';
+const CONFIRMATION = {
+  email: 'user@example.com',
+  code: '042317',
+  password: 'sup3rS3cret!',
+  confirmPassword: 'sup3rS3cret!',
+};
+const PASSWORD_CHANGE = {
+  currentPassword: 'sup3rS3cret!',
+  newPassword: 'ev3nS4fer!',
+  confirmPassword: 'ev3nS4fer!',
+};
 const CREDENTIALS = { email: 'user@example.com', password: 'sup3rS3cret!' };
 const PROFILE = {
   id: '0d3d5d8a-6f2e-4d2e-9f1a-6d0f9a3b5c21',
@@ -30,6 +53,8 @@ const PROFILE = {
 
 const SIGN_IN_LABEL = 'probe-sign-in';
 const SIGN_UP_LABEL = 'probe-sign-up';
+const CONFIRM_SIGN_UP_LABEL = 'probe-confirm-sign-up';
+const CHANGE_PASSWORD_LABEL = 'probe-change-password';
 const SIGN_OUT_LABEL = 'probe-sign-out';
 const SIGN_OUT_EVERYWHERE_LABEL = 'probe-sign-out-everywhere';
 
@@ -43,7 +68,16 @@ const networkFailure = () =>
 const rotatedPair = { accessToken: ACCESS_TOKEN, refreshToken: ROTATED_REFRESH_TOKEN };
 
 const Probe = () => {
-  const { status, user, signIn, signUp, signOut, signOutEverywhere } = useAuth();
+  const {
+    status,
+    user,
+    signIn,
+    signUp,
+    confirmSignUp: confirmSignUpAction,
+    changePassword: changePasswordAction,
+    signOut,
+    signOutEverywhere,
+  } = useAuth();
 
   return (
     <>
@@ -62,6 +96,20 @@ const Probe = () => {
         }}
       >
         <Text>{SIGN_UP_LABEL}</Text>
+      </Pressable>
+      <Pressable
+        onPress={() => {
+          void confirmSignUpAction(CONFIRMATION).catch(() => undefined);
+        }}
+      >
+        <Text>{CONFIRM_SIGN_UP_LABEL}</Text>
+      </Pressable>
+      <Pressable
+        onPress={() => {
+          void changePasswordAction(PASSWORD_CHANGE).catch(() => undefined);
+        }}
+      >
+        <Text>{CHANGE_PASSWORD_LABEL}</Text>
       </Pressable>
       <Pressable
         onPress={() => {
@@ -193,6 +241,30 @@ describe('AuthProvider', () => {
     expect(mockLogin).toHaveBeenCalledWith(CREDENTIALS);
   });
 
+  it('confirms the sign-up, which creates the account and opens the session', async () => {
+    mockConfirmSignUp.mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    });
+    mockFetchMe.mockResolvedValue(PROFILE);
+
+    await renderAuth();
+    await screen.findByText('status:signedOut');
+    await fireEvent.press(screen.getByText(CONFIRM_SIGN_UP_LABEL));
+
+    expect(await screen.findByText('status:signedIn')).toBeTruthy();
+    // The client-only confirmation field is not forwarded: the API body has no
+    // place for it.
+    expect(mockConfirmSignUp).toHaveBeenCalledWith({
+      email: CONFIRMATION.email,
+      code: CONFIRMATION.code,
+      password: CONFIRMATION.password,
+    });
+    // This call creates the account, so nothing logs in afterwards.
+    expect(mockLogin).not.toHaveBeenCalled();
+    await expect(readRefreshToken()).resolves.toBe(REFRESH_TOKEN);
+  });
+
   const givenSignedIn = async () => {
     await writeRefreshToken(REFRESH_TOKEN);
     mockRefreshSession.mockResolvedValue(rotatedPair);
@@ -201,6 +273,43 @@ describe('AuthProvider', () => {
     await renderAuth();
     await screen.findByText('status:signedIn');
   };
+
+  it('persists the replacement refresh token when the password changes', async () => {
+    mockChangePassword.mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REPLACEMENT_REFRESH_TOKEN,
+    });
+    await givenSignedIn();
+
+    await fireEvent.press(screen.getByText(CHANGE_PASSWORD_LABEL));
+
+    // The API revoked every other session and handed this device a new pair.
+    // Not writing it would sign this device out at the next refresh.
+    await waitFor(async () => {
+      await expect(readRefreshToken()).resolves.toBe(REPLACEMENT_REFRESH_TOKEN);
+    });
+    expect(await screen.findByText('status:signedIn')).toBeTruthy();
+    expect(mockChangePassword).toHaveBeenCalledWith({
+      currentPassword: PASSWORD_CHANGE.currentPassword,
+      newPassword: PASSWORD_CHANGE.newPassword,
+    });
+  });
+
+  it('keeps the session and the stored token when the password change is refused', async () => {
+    mockChangePassword.mockRejectedValue(
+      new ApiError({
+        status: 422,
+        code: API_ERROR_CODES.INVALID_CURRENT_PASSWORD,
+        message: 'never rendered',
+      }),
+    );
+    await givenSignedIn();
+
+    await fireEvent.press(screen.getByText(CHANGE_PASSWORD_LABEL));
+
+    expect(await screen.findByText('status:signedIn')).toBeTruthy();
+    await expect(readRefreshToken()).resolves.toBe(ROTATED_REFRESH_TOKEN);
+  });
 
   it('signs out, revoking this device session on the server', async () => {
     mockLogout.mockResolvedValue(undefined);

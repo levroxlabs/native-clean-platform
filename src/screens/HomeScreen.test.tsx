@@ -30,6 +30,8 @@ const givenSession = (overrides: Partial<ReturnType<typeof useAuth>> = {}) => {
     user: null,
     signIn: jest.fn(),
     signUp: jest.fn(),
+    confirmSignUp: jest.fn(),
+    changePassword: jest.fn(),
     signOut,
     signOutEverywhere,
     isSubmitting: false,
