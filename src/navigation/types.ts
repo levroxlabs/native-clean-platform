@@ -1,10 +1,15 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
-import type { AuthStackParamList } from '@/modules/auth';
+import type { AccountStackParamList, AuthStackParamList } from '@/modules/auth';
 
 /** Routes reachable in the signed-in shell. */
 export type AppStackParamList = {
   Home: undefined;
+  /**
+   * The auth module's own navigator, registered as one screen — a module's
+   * internals stop at its navigator, exactly as `RootStack` does.
+   */
+  Account: NavigatorScreenParams<AccountStackParamList>;
 };
 
 /**

@@ -8,3 +8,9 @@ export type AuthStackParamList = {
   /** Carried for the sign-in form afterwards; the reset body itself has no email. */
   ResetPassword: { email: string };
 };
+
+/** The signed-in flow this module owns, reached as one screen of the app shell. */
+export type AccountStackParamList = {
+  Account: undefined;
+  ChangePassword: undefined;
+};
