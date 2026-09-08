@@ -23,7 +23,7 @@ se registra nele.
 
 | Name                    | Description                                                       |
 | ----------------------- | ------------------------------------------------------------------ |
-| `API_ERROR_CODES`       | Os códigos de erro da API, copiados do `api-clean-platform`, mais dois do próprio cliente (`NETWORK_ERROR`, `UNEXPECTED_RESPONSE`). |
+| `API_ERROR_CODES`       | Os códigos de erro da API, copiados do `api-clean-platform`, mais dois do próprio cliente (`NETWORK_ERROR`, `UNEXPECTED_RESPONSE`). Ver a nota sobre `EMAIL_ALREADY_IN_USE` em Conventions. |
 | `HTTP_METHODS`          | Métodos usados pelo app.                                           |
 | `CLIENT_FAILURE_STATUS` | `0` — não houve status HTTP: a falha foi deste lado do fio.        |
 
@@ -79,3 +79,14 @@ se registra nele.
 - **O React Native não tem `navigator.onLine`.** Sem `startConnectivityWatch()`,
   o TanStack Query assume que o aparelho está sempre online: nunca pausa uma
   query e gasta tentativas contra um rádio desligado.
+
+- **`EMAIL_ALREADY_IN_USE` foi removido, e não deve voltar.** Não é um código
+  obsoleto: é um código *inalcançável*. O `confirm-email` da API captura o erro
+  da corrida no índice único e o converte em `EMAIL_VERIFICATION_FAILED`, e o
+  `register` responde `202` para qualquer endereço, de propósito. Nenhum
+  endpoint consegue colocá-lo no fio, e uma entrada aqui documentaria um
+  contrato que não existe.
+- **`TOO_MANY_REQUESTS` é global, não do `auth`.** Toda rota sensível da API tem
+  um teto por IP próprio, e qualquer módulo que fale com a API pode levar um
+  `429` — por isso a copy dele fica no `BASE_COPY` de `@/errors`, e não no mapa
+  de um módulo.

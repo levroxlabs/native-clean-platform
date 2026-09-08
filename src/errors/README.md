@@ -85,3 +85,13 @@ a copy que o usuário lê, o error boundary de render e o toast global.
 Telemetria de qualquer tipo, swipe para dispensar, toast com ação, boundary por
 tela, e captura de rejeição de promise fora do TanStack Query. O desenho está em
 `docs/superpowers/specs/2026-09-02-error-layer-design.md`.
+
+- **`TOO_MANY_REQUESTS` ganhou copy, e o `classify.ts` não mudou.** Um `429` já
+  cai em `INPUT` pela checagem de status, e `INPUT` não é retentável — que é o
+  comportamento certo, já que repetir é o que produziu o rate limit. A única
+  lacuna real era o `copyForError` cair no texto genérico, e ela se fecha com
+  uma entrada no `BASE_COPY`. Um `ErrorKind` novo não pagaria nada.
+- **O `Retry-After` do `429` é ignorado de propósito.** Renderizar uma contagem
+  a partir dele significa um relógio, um loop de re-render e uma segunda fonte
+  de verdade ao lado do cooldown de reenvio, por um header sobre o qual o
+  usuário não pode agir de forma diferente de "tente daqui a pouco".
