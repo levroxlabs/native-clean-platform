@@ -76,11 +76,24 @@ export const useAuthActions = ({
       // Best effort end to end: nothing here may reject. A keychain read, the
       // network call, and the keychain delete can all fail independently, and
       // none of them may leave the user stuck signed in.
-      const stored = await readRefreshToken().catch(() => null);
+      try {
+        const stored = await readRefreshToken();
 
-      if (stored !== null) await logout(stored).catch(() => undefined);
+        if (stored !== null) {
+          await logout(stored);
+        }
+      } catch {
+        // The read or the network call failed — nothing to do but move on to
+        // the local cleanup below, which must run either way.
+      }
 
-      await endSession().catch(() => undefined);
+      try {
+        await endSession();
+      } catch {
+        // Independent of the block above: the keychain delete can fail on
+        // its own and must not stop `queryClient.clear()` from running.
+      }
+
       queryClient.clear();
     },
     networkMode: 'always',

@@ -144,9 +144,7 @@ export const VerifyEmailScreen = ({ navigation, route }: VerifyEmailScreenProps)
         accessibilityState={{ disabled: isResendBlocked }}
         className="mt-4 items-center"
         disabled={isResendBlocked}
-        onPress={() => {
-          void resend();
-        }}
+        onPress={() => resend()}
       >
         <Text className="text-sm text-primary">
           {isCoolingDown ? resendCountdownLabel(secondsLeft) : COPY.resendLabel}

@@ -126,7 +126,9 @@ export const useAuthSession = (): AuthSessionValue => {
         } catch (error) {
           // Offline, or a 503 the API could not retry away: the caller owns it,
           // and the session stays exactly as it was.
-          if (!isEndedSession(error)) throw error;
+          if (!isEndedSession(error)) {
+            throw error;
+          }
 
           await endSession();
 
@@ -152,7 +154,9 @@ export const useAuthSession = (): AuthSessionValue => {
     const restore = async () => {
       const stored = await readRefreshToken();
 
-      if (!isMounted) return;
+      if (!isMounted) {
+        return;
+      }
 
       if (stored === null) {
         setHasCompletedBoot(true);
@@ -163,13 +167,19 @@ export const useAuthSession = (): AuthSessionValue => {
       try {
         const accessToken = await refreshAccessToken();
 
-        if (!isMounted) return;
+        if (!isMounted) {
+          return;
+        }
 
         // A token hands boot over to `meQuery`; null means the runner already
         // cleared the session, so there is nothing left to wait for.
-        if (accessToken === null) setHasCompletedBoot(true);
+        if (accessToken === null) {
+          setHasCompletedBoot(true);
+        }
       } catch (error) {
-        if (!isMounted) return;
+        if (!isMounted) {
+          return;
+        }
 
         // Not a TanStack Query call, so the global QueryCache callback that
         // toasts a failed boot cannot see this one. Without this the user would
@@ -179,7 +189,7 @@ export const useAuthSession = (): AuthSessionValue => {
       }
     };
 
-    void restore();
+    restore();
 
     return () => {
       isMounted = false;
@@ -188,15 +198,21 @@ export const useAuthSession = (): AuthSessionValue => {
 
   // Boot ends when the restored token has been answered for, either way.
   useEffect(() => {
-    if (hasCompletedBoot) return;
-    if (meQuery.isSuccess || meQuery.isError) setHasCompletedBoot(true);
+    if (hasCompletedBoot) {
+      return;
+    }
+    if (meQuery.isSuccess || meQuery.isError) {
+      setHasCompletedBoot(true);
+    }
   }, [hasCompletedBoot, meQuery.isSuccess, meQuery.isError]);
 
   // A token the API rejected must not survive in the keychain. Only a rejected
   // token, though: being offline at launch is no reason to make the user type
   // their password again on the next one.
   useEffect(() => {
-    if (tokenRef.current !== null && isEndedSession(meQuery.error)) void endSession();
+    if (tokenRef.current !== null && isEndedSession(meQuery.error)) {
+      endSession();
+    }
   }, [meQuery.error, endSession]);
 
   // Gated on the token rather than read straight off the query: `endSession`

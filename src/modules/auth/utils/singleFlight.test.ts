@@ -50,12 +50,17 @@ describe('createSingleFlight', () => {
     const pending = deferred<string>();
     const call = createSingleFlight(() => pending.promise);
 
-    // Both handlers are attached BEFORE the rejection, so neither call is
-    // briefly unhandled — which Node reports as a warning and Jest can fail on.
-    const settled = Promise.all([
-      call().catch((error: unknown) => error),
-      call().catch((error: unknown) => error),
-    ]);
+    // Attached BEFORE the rejection, so neither call is briefly unhandled —
+    // which Node reports as a warning and Jest can fail on.
+    const attempt = async () => {
+      try {
+        return await call();
+      } catch (error) {
+        return error;
+      }
+    };
+
+    const settled = Promise.all([attempt(), attempt()]);
 
     pending.reject(new Error(FAILURE_MESSAGE));
 

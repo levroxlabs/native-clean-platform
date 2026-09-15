@@ -64,6 +64,8 @@ const networkFailure = () =>
 
 const rotatedPair = { accessToken: ACCESS_TOKEN, refreshToken: ROTATED_REFRESH_TOKEN };
 
+// Every handler below that can reject swallows it with an empty catch: these
+// tests assert on rendered status via `waitFor`, not on this promise settling.
 const Probe = () => {
   const {
     status,
@@ -75,43 +77,55 @@ const Probe = () => {
     signOutEverywhere,
   } = useAuth();
 
+  const handleSignIn = async () => {
+    try {
+      await signIn(CREDENTIALS);
+    } catch {
+      // Swallowed — see comment above.
+    }
+  };
+
+  const handleConfirmSignUp = async () => {
+    try {
+      await confirmSignUpAction(CONFIRMATION);
+    } catch {
+      // Swallowed — see comment above.
+    }
+  };
+
+  const handleChangePassword = async () => {
+    try {
+      await changePasswordAction(PASSWORD_CHANGE);
+    } catch {
+      // Swallowed — see comment above.
+    }
+  };
+
+  const handleSignOutEverywhere = async () => {
+    try {
+      await signOutEverywhere();
+    } catch {
+      // Swallowed — see comment above.
+    }
+  };
+
   return (
     <>
       <Text>{`status:${status}`}</Text>
       <Text>{`user:${user?.email ?? 'none'}`}</Text>
-      <Pressable
-        onPress={() => {
-          void signIn(CREDENTIALS).catch(() => undefined);
-        }}
-      >
+      <Pressable onPress={handleSignIn}>
         <Text>{SIGN_IN_LABEL}</Text>
       </Pressable>
-      <Pressable
-        onPress={() => {
-          void confirmSignUpAction(CONFIRMATION).catch(() => undefined);
-        }}
-      >
+      <Pressable onPress={handleConfirmSignUp}>
         <Text>{CONFIRM_SIGN_UP_LABEL}</Text>
       </Pressable>
-      <Pressable
-        onPress={() => {
-          void changePasswordAction(PASSWORD_CHANGE).catch(() => undefined);
-        }}
-      >
+      <Pressable onPress={handleChangePassword}>
         <Text>{CHANGE_PASSWORD_LABEL}</Text>
       </Pressable>
-      <Pressable
-        onPress={() => {
-          void signOut();
-        }}
-      >
+      <Pressable onPress={() => signOut()}>
         <Text>{SIGN_OUT_LABEL}</Text>
       </Pressable>
-      <Pressable
-        onPress={() => {
-          void signOutEverywhere().catch(() => undefined);
-        }}
-      >
+      <Pressable onPress={handleSignOutEverywhere}>
         <Text>{SIGN_OUT_EVERYWHERE_LABEL}</Text>
       </Pressable>
     </>

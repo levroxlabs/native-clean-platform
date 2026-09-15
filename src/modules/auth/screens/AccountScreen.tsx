@@ -29,17 +29,29 @@ export const AccountScreen = ({ navigation }: AccountScreenProps) => {
   const { user, signOut, signOutEverywhere, isSigningOut } = useAuth();
   const { showError } = useErrorToast();
 
+  const handleSignOut = () => {
+    // Cannot reject by construction: the mutation swallows every failure
+    // inside it, network and keychain alike.
+    signOut();
+  };
+
+  const handleConfirmSignOutEverywhere = async () => {
+    // This one rejects on failure and keeps the session, so the rejection
+    // has to reach the toast instead of going unhandled.
+    try {
+      await signOutEverywhere();
+    } catch (error) {
+      showError(error);
+    }
+  };
+
   const confirmSignOutEverywhere = () => {
     Alert.alert(COPY.confirmTitle, COPY.confirmMessage, [
       { text: COPY.cancelLabel, style: 'cancel' },
       {
         text: COPY.confirmLabel,
         style: 'destructive',
-        onPress: () => {
-          // This one rejects on failure and keeps the session, so the rejection
-          // has to reach the toast instead of going unhandled.
-          void signOutEverywhere().catch(showError);
-        },
+        onPress: handleConfirmSignOutEverywhere,
       },
     ]);
   };
@@ -68,11 +80,7 @@ export const AccountScreen = ({ navigation }: AccountScreenProps) => {
         accessibilityState={{ disabled: isSigningOut }}
         className="w-full items-center rounded-lg border border-border px-4 py-3"
         disabled={isSigningOut}
-        onPress={() => {
-          // Cannot reject by construction: the mutation swallows every failure
-          // inside it, network and keychain alike.
-          void signOut();
-        }}
+        onPress={handleSignOut}
       >
         <Text className="text-base font-semibold text-content">{COPY.signOutLabel}</Text>
       </Pressable>
