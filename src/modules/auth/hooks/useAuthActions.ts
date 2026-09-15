@@ -73,13 +73,14 @@ export const useAuthActions = ({
 
   const signOutMutation = useMutation({
     mutationFn: async () => {
-      const stored = await readRefreshToken();
+      // Best effort end to end: nothing here may reject. A keychain read, the
+      // network call, and the keychain delete can all fail independently, and
+      // none of them may leave the user stuck signed in.
+      const stored = await readRefreshToken().catch(() => null);
 
-      // Best effort: a failure here must not keep the user signed in. The local
-      // clear below removes the only copy of the token either way.
       if (stored !== null) await logout(stored).catch(() => undefined);
 
-      await endSession();
+      await endSession().catch(() => undefined);
       queryClient.clear();
     },
     networkMode: 'always',

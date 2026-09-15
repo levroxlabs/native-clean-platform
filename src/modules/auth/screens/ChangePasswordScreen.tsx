@@ -11,7 +11,7 @@ import { SubmitButton } from '../components/SubmitButton';
 import { applyServerFieldErrors } from '../errorCopy';
 import { useAuth } from '../hooks/useAuth';
 import type { AccountStackParamList } from '../navigation/types';
-import { type ChangePasswordValues, changePasswordSchema } from '../validations';
+import { type ChangePasswordValues, changePasswordSchema, PASSWORD_HINT } from '../validations';
 
 const COPY = {
   title: 'Change your password',
@@ -21,7 +21,7 @@ const COPY = {
   currentPasswordLabel: 'Current password',
   newPasswordLabel: 'New password',
   confirmPasswordLabel: 'Confirm password',
-  passwordHint: 'At least 8 characters, with a letter, a digit and a symbol.',
+  passwordHint: PASSWORD_HINT,
   submitLabel: 'Change password',
 } as const;
 

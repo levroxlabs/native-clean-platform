@@ -40,6 +40,9 @@ export const ForgotPasswordScreen = ({ navigation }: ForgotPasswordScreenProps) 
   });
 
   const requestResetMutation = useMutation({
+    // Wrapped rather than passed by reference: TanStack Query calls `mutationFn`
+    // with a second argument of its own, and forwarding it into the API layer
+    // would leak the query client's internals into a request.
     mutationFn: (email: string) => requestPasswordReset(email),
     networkMode: 'always',
   });

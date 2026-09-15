@@ -53,7 +53,9 @@ export const AccountScreen = ({ navigation }: AccountScreenProps) => {
 
       <Pressable
         accessibilityRole="button"
+        accessibilityState={{ disabled: isSigningOut }}
         className="w-full items-center rounded-lg bg-primary px-4 py-3 active:bg-primary-pressed"
+        disabled={isSigningOut}
         onPress={() => navigation.navigate('ChangePassword')}
       >
         <Text className="text-base font-semibold text-content-inverse">
@@ -67,7 +69,8 @@ export const AccountScreen = ({ navigation }: AccountScreenProps) => {
         className="w-full items-center rounded-lg border border-border px-4 py-3"
         disabled={isSigningOut}
         onPress={() => {
-          // Cannot reject by construction: it swallows the server call's failure.
+          // Cannot reject by construction: the mutation swallows every failure
+          // inside it, network and keychain alike.
           void signOut();
         }}
       >

@@ -38,6 +38,13 @@ export const VALIDATION_COPY = {
   passwordMismatch: 'The two passwords do not match.',
 } as const;
 
+/**
+ * Shown under every field that CHOOSES a new password, next to `newPasswordSchema`
+ * so the two can never drift apart. Not part of `VALIDATION_COPY`: this is a hint
+ * shown up front, not an error shown after a failed rule.
+ */
+export const PASSWORD_HINT = `At least ${MIN_PASSWORD_LENGTH} characters, with a letter, a digit and a symbol.`;
+
 export const emailSchema = z
   .string()
   .trim()

@@ -14,7 +14,7 @@ import { applyServerFieldErrors } from '../errorCopy';
 import { useAuth } from '../hooks/useAuth';
 import { RESEND_COOLDOWN_SECONDS, useResendCooldown } from '../hooks/useResendCooldown';
 import type { AuthStackParamList } from '../navigation/types';
-import { type ConfirmSignUpValues, confirmSignUpSchema } from '../validations';
+import { type ConfirmSignUpValues, confirmSignUpSchema, PASSWORD_HINT } from '../validations';
 
 const COPY = {
   title: 'Confirm your email',
@@ -23,7 +23,7 @@ const COPY = {
   codeLabel: 'Verification code',
   passwordLabel: 'Password',
   confirmPasswordLabel: 'Confirm password',
-  passwordHint: 'At least 8 characters, with a letter, a digit and a symbol.',
+  passwordHint: PASSWORD_HINT,
   submitLabel: 'Create account',
   resendLabel: 'Send a new code',
   backToSignIn: 'Back to sign in',

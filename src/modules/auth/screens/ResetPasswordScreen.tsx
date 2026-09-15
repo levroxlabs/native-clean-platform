@@ -12,7 +12,7 @@ import { FIELD_TYPES, FormTextField } from '../components/FormTextField';
 import { SubmitButton } from '../components/SubmitButton';
 import { applyServerFieldErrors } from '../errorCopy';
 import type { AuthStackParamList } from '../navigation/types';
-import { type ResetPasswordValues, resetPasswordSchema } from '../validations';
+import { PASSWORD_HINT, type ResetPasswordValues, resetPasswordSchema } from '../validations';
 
 const COPY = {
   title: 'Choose a new password',
@@ -20,7 +20,7 @@ const COPY = {
   tokenLabel: 'Reset token',
   newPasswordLabel: 'New password',
   confirmPasswordLabel: 'Confirm password',
-  passwordHint: 'At least 8 characters, with a letter, a digit and a symbol.',
+  passwordHint: PASSWORD_HINT,
   submitLabel: 'Reset password',
   backToSignIn: 'Back to sign in',
 } as const;
@@ -43,6 +43,9 @@ export const ResetPasswordScreen = ({ navigation, route }: ResetPasswordScreenPr
   });
 
   const resetPasswordMutation = useMutation({
+    // Wrapped rather than passed by reference: TanStack Query calls `mutationFn`
+    // with a second argument of its own, and forwarding it into the API layer
+    // would leak the query client's internals into a request.
     mutationFn: (input: { token: string; newPassword: string }) => resetPassword(input),
     networkMode: 'always',
   });
