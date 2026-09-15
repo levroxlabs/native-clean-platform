@@ -6,7 +6,7 @@ nodeLinker: hoisted
 enablePrePostScripts: true
 
 minimumReleaseAgeExclude:
-  - '@expo/cli@57.0.17'
+  - '@expo/cli@57.0.17 || 57.0.23'
   - '@expo/fingerprint@0.20.9'
   - '@expo/local-build-cache-provider@57.0.7'
   - '@expo/metro-config@57.0.9'
@@ -15,11 +15,14 @@ minimumReleaseAgeExclude:
   - expo-asset@57.0.13
   - expo-constants@57.0.13
   - expo-file-system@57.0.5
-  - expo-modules-core@57.0.12
-  - expo-modules-jsi@57.0.5
-  - expo@57.0.15
+  - expo-modules-core@57.0.12 || 57.0.17
+  - expo-modules-jsi@57.0.5 || 57.1.0
+  - expo@57.0.15 || 57.0.21
   - '@expo/metro-runtime@57.0.12'
   - expo-secure-store@57.0.3
+  - '@expo/metro-file-map@57.0.3'
+  - babel-preset-expo@57.0.11
 
 allowBuilds:
+  '@parcel/watcher': true
   unrs-resolver: true
