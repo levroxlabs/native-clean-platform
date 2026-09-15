@@ -42,8 +42,8 @@ export const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
   });
 
   const startSignUpMutation = useMutation({
-    // Wrapped rather than passed by reference: TanStack Query calls `mutationFn`
-    // with a second argument of its own.
+    // Wrapped, not passed by reference: mutationFn would otherwise receive
+    // TanStack Query's own second argument.
     mutationFn: (email: string) => startSignUp(email),
     networkMode: 'always',
   });

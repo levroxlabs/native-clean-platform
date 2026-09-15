@@ -43,9 +43,8 @@ export const ResetPasswordScreen = ({ navigation, route }: ResetPasswordScreenPr
   });
 
   const resetPasswordMutation = useMutation({
-    // Wrapped rather than passed by reference: TanStack Query calls `mutationFn`
-    // with a second argument of its own, and forwarding it into the API layer
-    // would leak the query client's internals into a request.
+    // Wrapped, not passed by reference: mutationFn would otherwise receive
+    // TanStack Query's own second argument.
     mutationFn: (input: { token: string; newPassword: string }) => resetPassword(input),
     networkMode: 'always',
   });
