@@ -22,6 +22,7 @@ minimumReleaseAgeExclude:
   - expo-secure-store@57.0.3
   - '@expo/metro-file-map@57.0.3'
   - babel-preset-expo@57.0.11
+  - react-native-gesture-handler@2.33.0
 
 allowBuilds:
   '@parcel/watcher': true
