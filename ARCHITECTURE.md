@@ -75,10 +75,13 @@ src/
 │   ├── index.ts
 │   └── README.md
 ├── lib/                      I/O sem React — nem hook, nem contexto, nem componente
-│   ├── api.ts               instância axios + 2 interceptors, request(), ApiError, API_ERROR_CODES
-│   ├── api.test.ts          colocado — troca defaults.adapter para exercitar os interceptors
+│   ├── api/                 pasta própria: 3 arquivos, mesmo critério que promove modules/auth/api/
+│   │   ├── client.ts        instância axios, wiring dos 2 interceptors, api (get/post/patch/delete)
+│   │   ├── requestInterceptor.ts   bearer token + configureAuthorization/getAuthorizationHandlers
+│   │   ├── responseInterceptor.ts  ApiError, API_ERROR_CODES, tradução de erro + retry de refresh
+│   │   └── client.test.ts   colocado — troca defaults.adapter para exercitar os interceptors
 │   ├── connectivity.ts      NetInfo → onlineManager: sem isso o RN "está sempre online"
-│   ├── index.ts             não reexporta a instância: de fora, só request()
+│   ├── index.ts             não reexporta a instância: de fora, só api
 │   └── README.md
 ├── screens/                 telas que não pertencem a nenhum módulo específico
 │   ├── HomeScreen.tsx       o shell logado — prova navegação + NativeWind + tokens de ponta a ponta

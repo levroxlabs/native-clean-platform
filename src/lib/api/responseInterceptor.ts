@@ -1,16 +1,10 @@
-import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
+import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
-import { API_BASE_URL } from '@/config';
-
-const REQUEST_TIMEOUT_MS = 15000;
+import { getAuthorizationHandlers } from './requestInterceptor';
 
 const UNAUTHORIZED_STATUS = 401;
-const NO_CONTENT_STATUS = 204;
 /** No HTTP status exists: the request failed on this side of the wire. */
 export const CLIENT_FAILURE_STATUS = 0;
-
-const AUTHORIZATION_HEADER = 'Authorization';
-const BEARER_PREFIX = 'Bearer ';
 
 const NETWORK_ERROR_MESSAGE = 'The request did not reach the API.';
 const UNEXPECTED_RESPONSE_MESSAGE = 'The API answered with an unexpected body.';
@@ -66,16 +60,6 @@ export const API_ERROR_CODES = {
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];
 
-/** Internal only: each method on `api` below already fixes its own value. */
-const HTTP_METHODS = {
-  GET: 'GET',
-  POST: 'POST',
-  PATCH: 'PATCH',
-  DELETE: 'DELETE',
-} as const;
-
-type HttpMethod = (typeof HTTP_METHODS)[keyof typeof HTTP_METHODS];
-
 /** One entry of the API's `details` array on a 400. */
 export interface ValidationDetail {
   field?: string;
@@ -90,21 +74,6 @@ export interface ErrorEnvelope {
     details?: ValidationDetail[];
     traceId: string;
   };
-}
-
-/** The pair of callbacks that ties this client to the session. */
-export interface AuthorizationHandlers {
-  getAccessToken: () => string | null;
-  /**
-   * Resolves with a fresh access token, or `null` when the session is over — in
-   * which case the handler has ALREADY ended it locally. Rejects only when the
-   * refresh itself failed for a reason that is not the session (offline, 503),
-   * and that rejection is what the caller sees instead of the original 401.
-   *
-   * The handler serialises its own calls; this client may call it from several
-   * failed requests at once.
-   */
-  refreshAccessToken: () => Promise<string | null>;
 }
 
 const API_ERROR_NAME = 'ApiError';
@@ -141,20 +110,6 @@ export class ApiError extends Error {
   }
 }
 
-let handlers: AuthorizationHandlers | null = null;
-
-/**
- * The only tie between this module and the session. `AuthProvider` registers
- * itself on mount and clears the registration on unmount.
- *
- * This module knows only that a 401 with one particular code is worth one
- * retry. Which failures end a session, where the refresh token lives, and what
- * a reused token means all stay in `src/modules/auth/`.
- */
-export const configureAuthorization = (next: AuthorizationHandlers | null): void => {
-  handlers = next;
-};
-
 const isErrorEnvelope = (body: unknown): body is ErrorEnvelope => {
   if (typeof body !== 'object' || body === null || !('error' in body)) {
     return false;
@@ -168,27 +123,6 @@ const isErrorEnvelope = (body: unknown): body is ErrorEnvelope => {
     typeof (error as { code?: unknown }).code === 'string'
   );
 };
-
-/**
- * Exported for the colocated test, which swaps `defaults.adapter` to exercise
- * these interceptors without a network. Deliberately **not** re-exported by
- * `index.ts`: outside this folder the only way in is `api`, so the bearer
- * token and the error translation cannot be bypassed.
- */
-export const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: REQUEST_TIMEOUT_MS,
-});
-
-axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = handlers?.getAccessToken() ?? null;
-
-  if (token !== null) {
-    config.headers.set(AUTHORIZATION_HEADER, `${BEARER_PREFIX}${token}`);
-  }
-
-  return config;
-});
 
 const toApiError = (error: AxiosError): ApiError => {
   const { response } = error;
@@ -238,49 +172,31 @@ const shouldAttemptRefresh = (error: ApiError, config: RetriableRequestConfig): 
   error.code === API_ERROR_CODES.INVALID_ACCESS_TOKEN &&
   config.hasRetriedAfterRefresh !== true;
 
-axiosInstance.interceptors.response.use(undefined, async (error: AxiosError) => {
-  const apiError = toApiError(error);
-  const config = error.config as RetriableRequestConfig | undefined;
-
-  if (handlers === null || config === undefined || !shouldAttemptRefresh(apiError, config)) {
-    throw apiError;
-  }
-
-  // A rejection here is NOT a dead session — it is the refresh's own failure,
-  // and it propagates in place of the 401 so the caller sees why it really
-  // failed. `null` is the dead session, and the handler has already cleaned up.
-  const accessToken = await handlers.refreshAccessToken();
-
-  if (accessToken === null) {
-    throw apiError;
-  }
-
-  const retried: RetriableRequestConfig = { ...config, hasRetriedAfterRefresh: true };
-
-  return axiosInstance.request(retried);
-});
-
-const send = async <TResponse>(
-  path: string,
-  method: HttpMethod,
-  body?: unknown,
-): Promise<TResponse> => {
-  const response: AxiosResponse = await axiosInstance.request({ url: path, method, data: body });
-
-  return (response.status === NO_CONTENT_STATUS ? null : response.data) as TResponse;
-};
-
 /**
- * The only way into this client. One method per HTTP verb the app uses, so a
- * call site never repeats which method it means — `api.post(path, body)`
- * reads as what it does, instead of `request(path, { method: 'POST', body })`.
+ * Takes the instance rather than importing it: `client.ts` creates
+ * `axiosInstance`, so importing it back here would cycle the two modules.
  */
-export const api = {
-  get: <TResponse>(path: string): Promise<TResponse> => send<TResponse>(path, HTTP_METHODS.GET),
-  post: <TResponse>(path: string, body?: unknown): Promise<TResponse> =>
-    send<TResponse>(path, HTTP_METHODS.POST, body),
-  patch: <TResponse>(path: string, body?: unknown): Promise<TResponse> =>
-    send<TResponse>(path, HTTP_METHODS.PATCH, body),
-  delete: <TResponse>(path: string): Promise<TResponse> =>
-    send<TResponse>(path, HTTP_METHODS.DELETE),
+export const createResponseInterceptor = (axiosInstance: AxiosInstance) => {
+  return async (error: AxiosError) => {
+    const apiError = toApiError(error);
+    const config = error.config as RetriableRequestConfig | undefined;
+    const handlers = getAuthorizationHandlers();
+
+    if (handlers === null || config === undefined || !shouldAttemptRefresh(apiError, config)) {
+      throw apiError;
+    }
+
+    // A rejection here is NOT a dead session — it is the refresh's own failure,
+    // and it propagates in place of the 401 so the caller sees why it really
+    // failed. `null` is the dead session, and the handler has already cleaned up.
+    const accessToken = await handlers.refreshAccessToken();
+
+    if (accessToken === null) {
+      throw apiError;
+    }
+
+    const retried: RetriableRequestConfig = { ...config, hasRetriedAfterRefresh: true };
+
+    return axiosInstance.request(retried);
+  };
 };

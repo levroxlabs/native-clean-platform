@@ -39,13 +39,22 @@ se registra nele.
 
 ## Conventions
 
+- **`api.ts` virou a pasta `api/`.** `client.ts` cria a instância axios e
+  expõe `api`; `requestInterceptor.ts` põe o bearer token e guarda o registro
+  de `configureAuthorization`; `responseInterceptor.ts` traduz qualquer falha
+  para `ApiError` e faz o retry de refresh. `client.ts` é o único dos três que
+  depende dos outros dois — `requestInterceptor.ts` não conhece nada da pasta,
+  e `responseInterceptor.ts` só importa `getAuthorizationHandlers` de
+  `requestInterceptor.ts` — assim nenhum dos três fecha um ciclo de import.
+  Teste colocado único (`client.test.ts`), exercitando os três juntos, como o
+  `api.test.ts` original já fazia.
 - **É axios**, com `baseURL` e `timeout` na instância e dois interceptors: um
   põe o bearer token, o outro traduz qualquer falha para `ApiError`. Toda
   chamada de rede do app passa por `api.get/post/patch/delete`.
 - **`axiosInstance` (a instância crua do axios) não é reexportada pelo
-  `index.ts`.** Ela é exportada de `api.ts` só para o teste colocado trocar o
-  `defaults.adapter`; de fora da pasta o único caminho é o objeto `api`, então
-  não dá para escapar do token nem da tradução de erro.
+  `index.ts`.** Ela é exportada de `client.ts` só para o teste colocado trocar
+  o `defaults.adapter`; de fora da pasta o único caminho é o objeto `api`,
+  então não dá para escapar do token nem da tradução de erro.
 - **Um método por verbo, não uma função com `{ method, body }`.** Um call site
   como `api.post('/auth/login', credentials)` diz o que faz sem repetir o
   método; a versão anterior (`request(path, { method: 'POST', body })`) fazia

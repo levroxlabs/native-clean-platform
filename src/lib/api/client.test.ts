@@ -1,6 +1,8 @@
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 
-import { API_ERROR_CODES, ApiError, api, axiosInstance, configureAuthorization } from './api';
+import { api, axiosInstance } from './client';
+import { configureAuthorization } from './requestInterceptor';
+import { API_ERROR_CODES, ApiError } from './responseInterceptor';
 
 const BASE_URL = 'http://localhost:3000';
 const PATH = '/auth/me';
