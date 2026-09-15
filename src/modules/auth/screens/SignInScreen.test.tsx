@@ -43,9 +43,12 @@ beforeEach(() => {
   });
 });
 
-const renderScreen = async () =>
+const renderScreen = async (params?: { email?: string }) =>
   render(
-    <SignInScreen navigation={navigation as never} route={{ key: 'k', name: 'SignIn' } as never} />,
+    <SignInScreen
+      navigation={navigation as never}
+      route={{ key: 'k', name: 'SignIn', params } as never}
+    />,
   );
 
 const fillAndSubmit = async (email: string, password: string) => {
@@ -55,6 +58,15 @@ const fillAndSubmit = async (email: string, password: string) => {
 };
 
 describe('SignInScreen', () => {
+  it('pre-fills the address a password reset started from', async () => {
+    // The reset revoked every session, so signing in again is not optional —
+    // a blank field here would make the user retype the address they just
+    // typed on the previous screen.
+    await renderScreen({ email: VALID_EMAIL });
+
+    expect(screen.getByLabelText(EMAIL_LABEL).props.value).toBe(VALID_EMAIL);
+  });
+
   it('offers a way into password recovery', async () => {
     await renderScreen();
     await fireEvent.press(screen.getByText('Forgot your password?'));

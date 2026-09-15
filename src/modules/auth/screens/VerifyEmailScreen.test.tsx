@@ -167,4 +167,23 @@ describe('VerifyEmailScreen', () => {
     expect(mockResend).toHaveBeenCalledWith(VALID_EMAIL);
     expect(await screen.findByText(`${RESEND_LABEL} in ${COOLDOWN_SECONDS}s`)).toBeTruthy();
   });
+
+  it('leaves the resend available on a rejected call, unlike a resolved one', async () => {
+    // The request itself failed — not a thing the API is hiding, unlike a
+    // resend inside its own cooldown — so the button must not act as if a code
+    // was just sent.
+    mockResend.mockRejectedValue(
+      new ApiError({ status: 0, code: API_ERROR_CODES.NETWORK_ERROR, message: 'never rendered' }),
+    );
+
+    await renderFromLink();
+    await fireEvent.changeText(screen.getByLabelText(EMAIL_LABEL), VALID_EMAIL);
+    await act(async () => {
+      await fireEvent.press(screen.getByText(RESEND_LABEL));
+    });
+
+    expect(mockResend).toHaveBeenCalledWith(VALID_EMAIL);
+    expect(screen.queryByText(`${RESEND_LABEL} in ${COOLDOWN_SECONDS}s`)).toBeNull();
+    expect(screen.getByText(RESEND_LABEL)).toBeTruthy();
+  });
 });
