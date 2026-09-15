@@ -8,6 +8,7 @@ import { Pressable, Text, View } from 'react-native';
 import { copyForError } from '@/errors';
 
 import { resetPassword } from '../api/authApi';
+import { FormErrorMessage } from '../components/FormErrorMessage';
 import { FIELD_TYPES, FormTextField } from '../components/FormTextField';
 import { SubmitButton } from '../components/SubmitButton';
 import { applyServerFieldErrors } from '../errorCopy';
@@ -91,11 +92,7 @@ export const ResetPasswordScreen = ({ navigation, route }: ResetPasswordScreenPr
       />
       <Text className="mb-4 text-sm text-content-muted">{COPY.passwordHint}</Text>
 
-      {formError === null ? null : (
-        <Text className="mb-4 rounded-lg bg-danger-surface p-3 text-sm text-danger">
-          {formError}
-        </Text>
-      )}
+      <FormErrorMessage message={formError} />
 
       <SubmitButton
         isPending={resetPasswordMutation.isPending}

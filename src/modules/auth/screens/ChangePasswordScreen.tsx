@@ -6,6 +6,7 @@ import { Text, View } from 'react-native';
 
 import { copyForError } from '@/errors';
 
+import { FormErrorMessage } from '../components/FormErrorMessage';
 import { FIELD_TYPES, FormTextField } from '../components/FormTextField';
 import { SubmitButton } from '../components/SubmitButton';
 import { applyServerFieldErrors } from '../errorCopy';
@@ -86,11 +87,7 @@ export const ChangePasswordScreen = ({ navigation }: ChangePasswordScreenProps) 
       />
       <Text className="mb-4 text-sm text-content-muted">{COPY.passwordHint}</Text>
 
-      {formError === null ? null : (
-        <Text className="mb-4 rounded-lg bg-danger-surface p-3 text-sm text-danger">
-          {formError}
-        </Text>
-      )}
+      <FormErrorMessage message={formError} />
 
       <SubmitButton isPending={isSubmitting} label={COPY.submitLabel} onPress={submit} />
     </View>

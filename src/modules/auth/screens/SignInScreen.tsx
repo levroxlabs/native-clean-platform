@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Pressable, Text, View } from 'react-native';
 import { copyForError } from '@/errors';
+import { FormErrorMessage } from '../components/FormErrorMessage';
 import { FIELD_TYPES, FormTextField } from '../components/FormTextField';
 import { SubmitButton } from '../components/SubmitButton';
 
@@ -71,11 +72,7 @@ export const SignInScreen = ({ navigation, route }: SignInScreenProps) => {
         type={FIELD_TYPES.PASSWORD}
       />
 
-      {formError === null ? null : (
-        <Text className="mb-4 rounded-lg bg-danger-surface p-3 text-sm text-danger">
-          {formError}
-        </Text>
-      )}
+      <FormErrorMessage message={formError} />
 
       <SubmitButton isPending={isSubmitting} label={COPY.submitLabel} onPress={submit} />
 

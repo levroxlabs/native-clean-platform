@@ -8,6 +8,7 @@ import { Pressable, Text, View } from 'react-native';
 import { copyForError } from '@/errors';
 
 import { startSignUp } from '../api/authApi';
+import { FormErrorMessage } from '../components/FormErrorMessage';
 import { FIELD_TYPES, FormTextField } from '../components/FormTextField';
 import { SubmitButton } from '../components/SubmitButton';
 import { applyServerFieldErrors } from '../errorCopy';
@@ -76,11 +77,7 @@ export const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
         type={FIELD_TYPES.EMAIL}
       />
 
-      {formError === null ? null : (
-        <Text className="mb-4 rounded-lg bg-danger-surface p-3 text-sm text-danger">
-          {formError}
-        </Text>
-      )}
+      <FormErrorMessage message={formError} />
 
       <SubmitButton
         isPending={startSignUpMutation.isPending}
