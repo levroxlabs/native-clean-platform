@@ -10,7 +10,9 @@ const FALLBACK_TITLE = 'Something went wrong';
 let shouldThrow = true;
 
 const Bomb = () => {
-  if (shouldThrow) throw new Error('render exploded');
+  if (shouldThrow) {
+    throw new Error('render exploded');
+  }
 
   return <Text>{HEALTHY_TEXT}</Text>;
 };

@@ -37,12 +37,16 @@ registerErrorCopy(AUTH_ERROR_COPY);
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
-      if (query.meta?.silent !== true) reportError(error);
+      if (query.meta?.silent !== true) {
+        reportError(error);
+      }
     },
   }),
   mutationCache: new MutationCache({
     onError: (error, _variables, _context, mutation) => {
-      if (mutation.meta?.toastOnError === true) reportError(error);
+      if (mutation.meta?.toastOnError === true) {
+        reportError(error);
+      }
     },
   }),
   defaultOptions: {

@@ -156,7 +156,9 @@ export const configureAuthorization = (next: AuthorizationHandlers | null): void
 };
 
 const isErrorEnvelope = (body: unknown): body is ErrorEnvelope => {
-  if (typeof body !== 'object' || body === null || !('error' in body)) return false;
+  if (typeof body !== 'object' || body === null || !('error' in body)) {
+    return false;
+  }
 
   const { error } = body as { error: unknown };
 
@@ -181,7 +183,9 @@ export const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = handlers?.getAccessToken() ?? null;
 
-  if (token !== null) config.headers.set(AUTHORIZATION_HEADER, `${BEARER_PREFIX}${token}`);
+  if (token !== null) {
+    config.headers.set(AUTHORIZATION_HEADER, `${BEARER_PREFIX}${token}`);
+  }
 
   return config;
 });
@@ -247,7 +251,9 @@ axiosInstance.interceptors.response.use(undefined, async (error: AxiosError) => 
   // failed. `null` is the dead session, and the handler has already cleaned up.
   const accessToken = await handlers.refreshAccessToken();
 
-  if (accessToken === null) throw apiError;
+  if (accessToken === null) {
+    throw apiError;
+  }
 
   const retried: RetriableRequestConfig = { ...config, hasRetriedAfterRefresh: true };
 

@@ -51,7 +51,9 @@ const renderApp = async (silent: boolean) => {
   const queryClient = new QueryClient({
     queryCache: new QueryCache({
       onError: (error, query) => {
-        if (query.meta?.silent !== true) reportError(error);
+        if (query.meta?.silent !== true) {
+          reportError(error);
+        }
       },
     }),
     defaultOptions: { queries: { retry: false } },

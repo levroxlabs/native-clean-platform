@@ -13,7 +13,9 @@ const MISSING_PROVIDER_MESSAGE = 'useAuth was called outside of <AuthProvider>.'
 export const useAuth = (): AuthContextValue => {
   const value = useContext(AuthContext);
 
-  if (value === null) throw new Error(MISSING_PROVIDER_MESSAGE);
+  if (value === null) {
+    throw new Error(MISSING_PROVIDER_MESSAGE);
+  }
 
   return value;
 };

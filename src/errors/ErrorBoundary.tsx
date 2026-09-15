@@ -33,7 +33,9 @@ export class ErrorBoundary extends Component<PropsWithChildren, ErrorBoundarySta
   };
 
   render() {
-    if (!this.state.hasError) return this.props.children;
+    if (!this.state.hasError) {
+      return this.props.children;
+    }
 
     return (
       <View className="flex-1 items-center justify-center bg-background px-6">

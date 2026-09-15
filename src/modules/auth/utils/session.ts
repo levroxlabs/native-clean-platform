@@ -15,8 +15,12 @@ interface StatusInput {
  * a session: only `/auth/me` can say whether it still verifies.
  */
 export const resolveStatus = ({ hasCompletedBoot, token, user }: StatusInput): AuthStatus => {
-  if (!hasCompletedBoot) return AUTH_STATUSES.LOADING;
-  if (token === null || user === null) return AUTH_STATUSES.SIGNED_OUT;
+  if (!hasCompletedBoot) {
+    return AUTH_STATUSES.LOADING;
+  }
+  if (token === null || user === null) {
+    return AUTH_STATUSES.SIGNED_OUT;
+  }
 
   return AUTH_STATUSES.SIGNED_IN;
 };

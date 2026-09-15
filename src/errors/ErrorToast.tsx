@@ -39,7 +39,9 @@ export const ErrorToastProvider = ({ children }: PropsWithChildren) => {
   const dismissTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearDismissTimeout = useCallback(() => {
-    if (dismissTimeout.current !== null) clearTimeout(dismissTimeout.current);
+    if (dismissTimeout.current !== null) {
+      clearTimeout(dismissTimeout.current);
+    }
     dismissTimeout.current = null;
   }, []);
 
@@ -54,7 +56,9 @@ export const ErrorToastProvider = ({ children }: PropsWithChildren) => {
       // in, which still resolves this callback — with `finished: false`. Only
       // an uninterrupted fade-out means the toast that was showing is really
       // gone; otherwise this would clear the message the new error just set.
-      if (finished) setMessage(null);
+      if (finished) {
+        setMessage(null);
+      }
     });
   }, [clearDismissTimeout, opacity]);
 
@@ -62,14 +66,18 @@ export const ErrorToastProvider = ({ children }: PropsWithChildren) => {
     (error: unknown) => {
       // A session error is already sending the user to sign-in; a red message
       // beside that redirect reads as a second, unrelated failure.
-      if (classifyError(error) === ERROR_KINDS.SESSION) return;
+      if (classifyError(error) === ERROR_KINDS.SESSION) {
+        return;
+      }
 
       const copy = copyForError(error);
 
       setMessage(copy);
       // Android gets it from accessibilityLiveRegion below; iOS has no
       // equivalent and would announce nothing at all without this.
-      if (Platform.OS === IOS_PLATFORM) AccessibilityInfo.announceForAccessibility(copy);
+      if (Platform.OS === IOS_PLATFORM) {
+        AccessibilityInfo.announceForAccessibility(copy);
+      }
 
       clearDismissTimeout();
       dismissTimeout.current = setTimeout(hide, TOAST_DURATION_MS);

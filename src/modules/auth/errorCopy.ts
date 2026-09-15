@@ -53,11 +53,15 @@ export const applyServerFieldErrors = <TValues extends FieldValues>(
   setError: UseFormSetError<TValues>,
   fields: readonly Path<TValues>[],
 ): void => {
-  if (!(error instanceof ApiError)) return;
+  if (!(error instanceof ApiError)) {
+    return;
+  }
 
   for (const detail of error.details) {
     const field = fields.find((candidate) => candidate === detail.field);
 
-    if (field !== undefined) setError(field, { message: SERVER_FIELD_MESSAGE });
+    if (field !== undefined) {
+      setError(field, { message: SERVER_FIELD_MESSAGE });
+    }
   }
 };

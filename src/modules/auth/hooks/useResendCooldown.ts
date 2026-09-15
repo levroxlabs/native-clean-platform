@@ -23,7 +23,9 @@ export const useResendCooldown = (initialSeconds: number) => {
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
 
   useEffect(() => {
-    if (secondsLeft === READY) return;
+    if (secondsLeft === READY) {
+      return;
+    }
 
     const timer = setTimeout(() => setSecondsLeft((current) => current - 1), ONE_SECOND_MS);
 

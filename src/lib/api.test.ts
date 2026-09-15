@@ -28,7 +28,9 @@ const respondWith = (status: number, data: unknown) => {
     lastConfig = config;
     const response = { data, status, statusText: '', headers: {}, config } as AxiosResponse;
 
-    if (status >= OK_STATUS && status < LOWEST_ERROR_STATUS) return response;
+    if (status >= OK_STATUS && status < LOWEST_ERROR_STATUS) {
+      return response;
+    }
 
     throw new AxiosError('Request failed', String(status), config, null, response);
   };
@@ -57,7 +59,9 @@ const respondInOrder = (responses: readonly [CannedResponse, ...CannedResponse[]
 
     const response = { data, status, statusText: '', headers: {}, config } as AxiosResponse;
 
-    if (status >= OK_STATUS && status < LOWEST_ERROR_STATUS) return response;
+    if (status >= OK_STATUS && status < LOWEST_ERROR_STATUS) {
+      return response;
+    }
 
     throw new AxiosError('Request failed', String(status), config, null, response);
   };

@@ -13,7 +13,9 @@ import { RootStack } from './RootStack';
 export const RootNavigator = () => {
   const { status } = useAuth();
 
-  if (status === AUTH_STATUSES.LOADING) return <SplashScreen />;
+  if (status === AUTH_STATUSES.LOADING) {
+    return <SplashScreen />;
+  }
 
   return (
     <NavigationContainer>

@@ -29,6 +29,7 @@
       "preset": "recommended",
       "style": {
         "noMagicNumbers": "error",
+        "useBlockStatements": "error",
         "useConsistentArrowReturn": "error",
         "useNamingConvention": {
           "level": "error",

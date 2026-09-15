@@ -11,7 +11,9 @@ const MISSING_PROVIDER_MESSAGE = 'useErrorToast was called outside of <ErrorToas
 export const useErrorToast = (): ErrorToastValue => {
   const value = useContext(ErrorToastContext);
 
-  if (value === null) throw new Error(MISSING_PROVIDER_MESSAGE);
+  if (value === null) {
+    throw new Error(MISSING_PROVIDER_MESSAGE);
+  }
 
   return value;
 };

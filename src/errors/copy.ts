@@ -41,7 +41,9 @@ export const resetErrorCopy = (): void => {
  * for logs and never reaches the screen.
  */
 export const copyForError = (error: unknown): string => {
-  if (!(error instanceof ApiError)) return FALLBACK_COPY;
+  if (!(error instanceof ApiError)) {
+    return FALLBACK_COPY;
+  }
 
   return registeredCopy[error.code] ?? BASE_COPY[error.code] ?? FALLBACK_COPY;
 };
