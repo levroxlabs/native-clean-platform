@@ -42,10 +42,11 @@ export const classifyError = (error: unknown): ErrorKind => {
     return ERROR_KINDS.OFFLINE;
   }
 
-  // Status before the UNEXPECTED_RESPONSE code: the client (src/lib/api.ts)
-  // throws that code for ANY status whose body isn't the expected envelope,
-  // including a 502/503 with an HTML body from a proxy. That is still a server
-  // problem worth retrying, so a 5xx must win over the code.
+  // Status before the UNEXPECTED_RESPONSE code: the client
+  // (src/lib/api/responseInterceptor.ts) throws that code for ANY status whose
+  // body isn't the expected envelope, including a 502/503 with an HTML body
+  // from a proxy. That is still a server problem worth retrying, so a 5xx
+  // must win over the code.
   if (error.status >= LOWEST_SERVER_ERROR_STATUS) {
     return ERROR_KINDS.SERVER;
   }

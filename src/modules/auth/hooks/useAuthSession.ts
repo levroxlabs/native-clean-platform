@@ -102,9 +102,10 @@ export const useAuthSession = (): AuthSessionValue => {
    * requires it: two concurrent refreshes of the same token return two tokens
    * and only the last one issued stays valid.
    *
-   * Its three answers are the contract `src/lib/api.ts` reads: a token means
-   * retry, `null` means the session is over AND has already been cleared here,
-   * and a rejection means the refresh itself failed with the session intact.
+   * Its three answers are the contract `src/lib/api/responseInterceptor.ts`
+   * reads: a token means retry, `null` means the session is over AND has
+   * already been cleared here, and a rejection means the refresh itself
+   * failed with the session intact.
    */
   const refreshAccessToken = useMemo(
     () =>

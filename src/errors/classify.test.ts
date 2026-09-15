@@ -75,9 +75,10 @@ describe('classifyError', () => {
 
   it('calls a 5xx with a non-envelope body server, not unexpected, so a proxy error still retries', () => {
     // A gateway returning an HTML error page on a 502/503 fails the envelope
-    // check in src/lib/api.ts and comes back as UNEXPECTED_RESPONSE — but the
-    // status still says "server problem", and that must win: this is exactly
-    // the transient failure the retry policy exists for.
+    // check in src/lib/api/responseInterceptor.ts and comes back as
+    // UNEXPECTED_RESPONSE — but the status still says "server problem", and
+    // that must win: this is exactly the transient failure the retry policy
+    // exists for.
     expect(classifyError(apiError(502, API_ERROR_CODES.UNEXPECTED_RESPONSE))).toBe(
       ERROR_KINDS.SERVER,
     );
