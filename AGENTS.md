@@ -314,3 +314,109 @@ const MAX_RETRY_ATTEMPTS = 1;
 This is not machine-checked: Biome has no rule for comment quality, so hold
 the line in review, the same way [Rule 2](#2-arrow-functions-everywhere) holds
 the line on `function` declarations.
+
+---
+
+## 11. Promises in event handlers and effects
+
+Never write `.then()`/`.catch()`. Use `async`/`await` with `try`/`catch`.
+
+When a call is fire-and-forget — the caller does not need the result and
+nothing downstream depends on it resolving — call it directly, with no
+`void`:
+
+```tsx
+// Good
+onPress={() => signOut()}
+
+// Bad
+onPress={() => void signOut()}
+```
+
+`biome.json` has no rule in this project that flags an unhandled promise, so
+there is nothing to silence — `void` here would only be decoration, not a
+tool requirement. The same applies inside `useEffect`: the effect callback
+itself cannot be `async`, so define the async function inside it and call it
+without `void`.
+
+When a rejection needs to reach something — a toast, a form error, a retry —
+wrap the call in an `async` function and handle it with `try`/`catch`. Name it
+and pass it by reference rather than inlining it — see
+[Rule 13](#13-extracting-handlers-from-jsx-props):
+
+```tsx
+// Good
+const handleSignOutEverywhere = async () => {
+  try {
+    await signOutEverywhere();
+  } catch (error) {
+    showError(error);
+  }
+};
+
+onPress={handleSignOutEverywhere}
+
+// Bad
+onPress={() => {
+  void signOutEverywhere().catch(showError);
+}}
+```
+
+This is not machine-checked — hold the line in review, the same way
+[Rule 2](#2-arrow-functions-everywhere) holds the line on `function`
+declarations.
+
+---
+
+## 12. Block-bodied `if` statements
+
+Every `if` (and `else`) always uses a block body, even for a single
+statement:
+
+```ts
+// Good
+if (value === null) {
+  throw new Error(MISSING_PROVIDER_MESSAGE);
+}
+
+// Bad
+if (value === null) throw new Error(MISSING_PROVIDER_MESSAGE);
+```
+
+More lines in some cases, but every statement then reads at the same scan
+speed — nothing is hiding on the condition's own line.
+
+Machine-checked by Biome's `style.useBlockStatements`. Biome marks its own fix
+as unsafe (wrapping a statement in a block can shift `var` hoisting, which
+this codebase never relies on), so apply it with
+`biome check --write --unsafe .` rather than the plain `pnpm lint:fix`.
+
+---
+
+## 13. Extracting handlers from JSX props
+
+Prefer a named function over an inline arrow when the handler holds more than
+one statement, or logic worth naming on its own:
+
+```tsx
+// Good
+const handleSignOutEverywhere = async () => {
+  try {
+    await signOutEverywhere();
+  } catch (error) {
+    showError(error);
+  }
+};
+
+<Pressable onPress={handleSignOutEverywhere}>
+
+// Also fine — one expression, nothing to name
+<Pressable onPress={() => signOut()}>
+```
+
+This is a default to lean on, not an absolute — balance it against the
+surrounding code as you write it. A handler that is a single call or
+expression (`() => signOut()`, `() => navigation.navigate('ChangePassword')`)
+reads fine inline; a `try`/`catch`, more than one statement, or anything that
+would otherwise carry a comment is worth pulling out and naming. Not
+machine-checked — hold the line in review.
