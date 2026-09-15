@@ -277,3 +277,40 @@ When a trigger fires:
 Never silently continue past a trigger, and never claim the problem is "almost
 solved" as a reason to keep going — that is the rationalization this rule exists
 to catch.
+
+---
+
+## 10. Comments
+
+A comment exists to carry a **WHY** the code cannot say on its own — never to
+restate a **WHAT** the code and its names already say. Add one only when it
+teaches something a careful reader would not otherwise get: a non-obvious
+constraint, an invariant, a trade-off, a fact about an external system (the
+API, a library, a platform), or the reason a simpler approach was rejected.
+
+```ts
+// Bad — restates the code
+// increments the retry counter
+retryCount += 1;
+
+// Good — the code alone can't tell you this
+// Retries after the original call, so this is one retry in total, not two.
+const MAX_RETRY_ATTEMPTS = 1;
+```
+
+- If deleting the comment loses no information a reader needs, delete it.
+- One clause is usually enough. A comment earns a second sentence only when
+  the reasoning genuinely needs it — reach for a full paragraph rarely, and
+  never as a place to restate the signature or repeat the variable name.
+- Don't paste the same explanation at every call site. When one non-obvious
+  fact justifies a pattern repeated across files, write it once — next to the
+  export it belongs to, or in the module's `README.md` — and leave the other
+  sites either uncommented or pointing back in a few words, not the full
+  explanation again.
+- A comment that no longer matches the code it sits above is worse than no
+  comment at all. Update or delete it in the same change that changes the
+  code — don't leave it for someone else to notice it lied.
+
+This is not machine-checked: Biome has no rule for comment quality, so hold
+the line in review, the same way [Rule 2](#2-arrow-functions-everywhere) holds
+the line on `function` declarations.
