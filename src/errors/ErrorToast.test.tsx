@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
 import { type Metrics, SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -162,7 +162,11 @@ describe('ErrorToastProvider', () => {
   it('registers itself as the reporter while mounted', async () => {
     await renderWithProvider(offlineError);
 
-    reportError(offlineError);
+    // Called directly rather than through fireEvent, so it needs its own act()
+    // to keep the resulting setMessage() inside a wrapped update.
+    await act(() => {
+      reportError(offlineError);
+    });
 
     expect(await screen.findByText(OFFLINE_COPY)).toBeTruthy();
   });

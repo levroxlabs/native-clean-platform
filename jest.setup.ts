@@ -1,3 +1,5 @@
+import { notifyManager } from '@tanstack/react-query';
+
 /**
  * `babel-preset-expo` only inlines EXPO_PUBLIC_* variables in production
  * builds. In development and under Jest it rewrites them to `expo/virtual/env`,
@@ -7,6 +9,16 @@
 const TEST_API_BASE_URL = 'http://localhost:3000';
 
 process.env.EXPO_PUBLIC_API_URL = TEST_API_BASE_URL;
+
+/**
+ * React Query's default scheduler defers every query/mutation notification
+ * through `setTimeout(0)`, a macrotask that lands outside the `act()` scope
+ * `render`/`fireEvent` wrap around a test's own awaits. That produces
+ * "not wrapped in act(...)" warnings on whichever test happens to be running
+ * when the timeout fires. Running the scheduled callback synchronously keeps
+ * every notification inside the triggering call's act scope instead.
+ */
+notifyManager.setScheduler((callback) => callback());
 
 /**
  * An in-memory keychain. Real `expo-secure-store` needs a native module, and
