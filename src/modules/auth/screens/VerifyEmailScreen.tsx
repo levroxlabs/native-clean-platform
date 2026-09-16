@@ -4,18 +4,21 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Pressable, Text, View } from 'react-native';
-
+import { FormField } from '@/components';
 import { copyForError } from '@/errors';
-
 import { resendVerificationCode } from '../api/authApi';
 import { FormErrorMessage } from '../components/FormErrorMessage';
-import { FIELD_TYPES, FormTextField } from '../components/FormTextField';
 import { SubmitButton } from '../components/SubmitButton';
 import { applyServerFieldErrors } from '../errorCopy';
 import { useAuth } from '../hooks/useAuth';
 import { RESEND_COOLDOWN_SECONDS, useResendCooldown } from '../hooks/useResendCooldown';
 import type { AuthStackParamList } from '../navigation/types';
-import { type ConfirmSignUpValues, confirmSignUpSchema, PASSWORD_HINT } from '../validations';
+import {
+  type ConfirmSignUpValues,
+  confirmSignUpSchema,
+  PASSWORD_HINT,
+  VERIFICATION_CODE_DIGITS,
+} from '../validations';
 
 const COPY = {
   title: 'Confirm your email',
@@ -111,24 +114,20 @@ export const VerifyEmailScreen = ({ navigation, route }: VerifyEmailScreenProps)
       <Text className="mb-1 text-2xl font-semibold text-content">{COPY.title}</Text>
       <Text className="mb-6 text-sm text-content-muted">{COPY.subtitle}</Text>
 
-      <FormTextField
+      <FormField control={control} label={COPY.emailLabel} name="email" type="email" />
+      <FormField
         control={control}
-        label={COPY.emailLabel}
-        name="email"
-        type={FIELD_TYPES.EMAIL}
+        digits={VERIFICATION_CODE_DIGITS}
+        label={COPY.codeLabel}
+        name="code"
+        type="code"
       />
-      <FormTextField control={control} label={COPY.codeLabel} name="code" type={FIELD_TYPES.CODE} />
-      <FormTextField
-        control={control}
-        label={COPY.passwordLabel}
-        name="password"
-        type={FIELD_TYPES.NEW_PASSWORD}
-      />
-      <FormTextField
+      <FormField control={control} label={COPY.passwordLabel} name="password" type="newPassword" />
+      <FormField
         control={control}
         label={COPY.confirmPasswordLabel}
         name="confirmPassword"
-        type={FIELD_TYPES.NEW_PASSWORD}
+        type="newPassword"
       />
       <Text className="mb-4 text-sm text-content-muted">{COPY.passwordHint}</Text>
 

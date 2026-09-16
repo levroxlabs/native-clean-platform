@@ -4,12 +4,10 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Pressable, Text, View } from 'react-native';
-
+import { FormField } from '@/components';
 import { copyForError } from '@/errors';
-
 import { resetPassword } from '../api/authApi';
 import { FormErrorMessage } from '../components/FormErrorMessage';
-import { FIELD_TYPES, FormTextField } from '../components/FormTextField';
 import { SubmitButton } from '../components/SubmitButton';
 import { applyServerFieldErrors } from '../errorCopy';
 import type { AuthStackParamList } from '../navigation/types';
@@ -72,23 +70,24 @@ export const ResetPasswordScreen = ({ navigation, route }: ResetPasswordScreenPr
       <Text className="mb-1 text-2xl font-semibold text-content">{COPY.title}</Text>
       <Text className="mb-6 text-sm text-content-muted">{COPY.subtitle}</Text>
 
-      <FormTextField
+      <FormField
         control={control}
+        inputProps={{ autoCapitalize: 'none', autoComplete: 'off', autoCorrect: false }}
         label={COPY.tokenLabel}
         name="token"
-        type={FIELD_TYPES.TOKEN}
+        type="text"
       />
-      <FormTextField
+      <FormField
         control={control}
         label={COPY.newPasswordLabel}
         name="newPassword"
-        type={FIELD_TYPES.NEW_PASSWORD}
+        type="newPassword"
       />
-      <FormTextField
+      <FormField
         control={control}
         label={COPY.confirmPasswordLabel}
         name="confirmPassword"
-        type={FIELD_TYPES.NEW_PASSWORD}
+        type="newPassword"
       />
       <Text className="mb-4 text-sm text-content-muted">{COPY.passwordHint}</Text>
 

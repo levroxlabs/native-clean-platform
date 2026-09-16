@@ -3,9 +3,9 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Pressable, Text, View } from 'react-native';
+import { FormField } from '@/components';
 import { copyForError } from '@/errors';
 import { FormErrorMessage } from '../components/FormErrorMessage';
-import { FIELD_TYPES, FormTextField } from '../components/FormTextField';
 import { SubmitButton } from '../components/SubmitButton';
 
 import { applyServerFieldErrors } from '../errorCopy';
@@ -59,18 +59,8 @@ export const SignInScreen = ({ navigation, route }: SignInScreenProps) => {
     <View className="flex-1 justify-center bg-background px-6">
       <Text className="mb-6 text-2xl font-semibold text-content">{COPY.title}</Text>
 
-      <FormTextField
-        control={control}
-        label={COPY.emailLabel}
-        name="email"
-        type={FIELD_TYPES.EMAIL}
-      />
-      <FormTextField
-        control={control}
-        label={COPY.passwordLabel}
-        name="password"
-        type={FIELD_TYPES.PASSWORD}
-      />
+      <FormField control={control} label={COPY.emailLabel} name="email" type="email" />
+      <FormField control={control} label={COPY.passwordLabel} name="password" type="password" />
 
       <FormErrorMessage message={formError} />
 
