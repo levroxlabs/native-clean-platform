@@ -146,7 +146,12 @@ folder map.
 - Nothing imports a file inside a module — only what the module's `index.ts`
   exports.
 - A component moves out of `modules/<x>/` into `src/components/` only once a
-  second module needs it.
+  second module needs it — **unless** it is a design-system primitive every
+  app cloned from this boilerplate is known in advance to need (the "second
+  consumer" is then the next app, not the next module in this repo). Today's
+  example: `src/components/inputs/` and `forms/`. `SubmitButton` stays in
+  `modules/auth/components/` under the normal rule — there is no comparable
+  "every app needs exactly this button" argument for it.
 - `src/lib/` knows nothing about React. Hooks and Contexts live in
   `src/hooks/` or inside the module that owns them — a module's contexts go in
   its own `context/` folder, and its form schemas in `validations/`.

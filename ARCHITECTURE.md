@@ -56,8 +56,17 @@ jest.setup.ts               EXPO_PUBLIC_* de teste + keychain em memória (mock 
 .maestro/                   flows de teste E2E (Maestro) — só o README por enquanto
 docs/superpowers/           specs e planos das decisões já tomadas (testes unitários, E2E)
 src/
-├── components/             componentes compartilhados por mais de um módulo — vazio por enquanto
-│   ├── index.ts             (sem exports ainda)
+├── components/               primitivas de UI conhecidas de antemão como multi-app — exceção documentada à regra do segundo consumidor (ver abaixo, não "vazio")
+│   ├── inputs/               primitivas puras, sem react-hook-form
+│   │   ├── TextInput.tsx     base: label, value/onChangeText, error, className
+│   │   ├── EmailInput.tsx    teclado/autocomplete de email
+│   │   ├── PasswordInput.tsx  secureTextEntry + variant 'current' | 'new'
+│   │   ├── CodeInput.tsx     teclado numérico, one-time-code, `digits` do chamador
+│   │   └── *.test.tsx        colocados, um por componente
+│   ├── forms/                 a integração com react-hook-form
+│   │   ├── FormField.tsx     Controller + despacha pro input certo por `type`
+│   │   └── FormField.test.tsx
+│   ├── index.ts
 │   └── README.md
 ├── config/                  variáveis de ambiente, validadas na carga
 │   ├── env.ts               readApiBaseUrl() + API_BASE_URL — falha alto se faltar
@@ -99,7 +108,7 @@ src/
 ├── modules/                  um módulo hoje: auth
 │   ├── auth/
 │   │   ├── api/             authApi.ts + schemas.ts (respostas da API) + testes colocados
-│   │   ├── components/      FormTextField.tsx, SubmitButton.tsx — internos deste módulo
+│   │   ├── components/      FormErrorMessage.tsx, SubmitButton.tsx — internos deste módulo
 │   │   ├── hooks/           useAuth.ts
 │   │   ├── context/         AuthContext.tsx — o context E o provider no mesmo arquivo + teste
 │   │   ├── navigation/      AuthStack.tsx, types.ts
@@ -143,15 +152,28 @@ e as regras que atravessam pastas.
 Um componente só sai de dentro de um módulo para `src/components/` quando um
 **segundo** módulo passa a precisar dele — antes disso, mover é especulação.
 
+**Exceção:** uma primitiva de design system que qualquer app clonado deste
+boilerplate vai precisar — hoje, os inputs de formulário em
+`src/components/inputs/` e `forms/` — pode nascer direto em `src/components/`
+mesmo com um consumidor só neste repositório. O "segundo consumidor" aqui é o
+próximo app, não o próximo módulo. `SubmitButton` continua em
+`modules/auth/components/` sob a regra normal: não há um argumento
+equivalente de "todo app precisa exatamente deste botão", então movê-lo agora
+seria a especulação que a regra existe para barrar.
+
 **Sem lint nem dependency-cruiser checando isso hoje.** Diferente do repo da
 API, que já tem uma tabela de fronteira equivalente pronta para o dia em que
 o lint de fronteira entrar, aqui a regra é convenção pura, sustentada em
 review.
 
-`components/`, assim como `modules/<m>/components/`, começa **flat** (um
-arquivo por componente). Subpastas por categoria (`ui/`, `layout/`,
-`feedback/`) só valem a pena quando categorias distintas ficam visíveis ali
-dentro — não se cria essa divisão antecipadamente.
+`modules/<m>/components/` começa **flat** (um arquivo por componente).
+Subpastas por categoria só valem a pena quando categorias distintas ficam
+visíveis ali dentro — não se cria essa divisão antecipadamente.
+
+`src/components/` foge dessa regra desde o início: `inputs/` (primitivas de
+UI puras) e `forms/` (a integração com react-hook-form) já são duas
+categorias reais e distintas no dia em que a pasta ganha seu primeiro
+export — não uma divisão especulativa.
 
 ---
 

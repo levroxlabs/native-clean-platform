@@ -155,3 +155,8 @@ escolher entre o stack logado e o deslogado. Fala com os onze endpoints de
 - **`isEndedSession` delega para o `classifyError` de `@/errors`** em vez de
   repetir o conjunto de códigos. Duas listas dos mesmos três códigos divergem no
   dia em que um quarto aparecer.
+- **Campos de formulário vêm de `@/components`, não daqui.** `FormField`/
+  `FORM_FIELD_TYPES` (em `src/components/forms/`) substituem o antigo
+  `FormTextField` deste módulo — ele foi promovido junto com as primitivas de
+  input, porque qualquer app clonado deste boilerplate precisa dos mesmos
+  tipos de campo. Ver `src/components/README.md`.
