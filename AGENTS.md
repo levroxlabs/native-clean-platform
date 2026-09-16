@@ -115,6 +115,7 @@ closed set of options.
 | Layout values used outside Tailwind (`hitSlop`, `snapToInterval`)        | Numbers that are already inside a named token in `src/theme/tokens.js` |
 | Test IDs and accessibility identifiers                                  | **Route names** — write `<Stack.Screen name="SignIn">` and `navigate('SignIn')`. The param list in `types.ts` is the single declaration, and `tsc` rejects a name that is not in it |
 |                                                                          | **API paths** — write `request('/auth/login', …)`. The path appears once, in the function that owns that endpoint |
+|                                                                          | **A closed-set prop already typed with its own derived union** — write `<FormField type="password">`, not `type={FORM_FIELD_TYPES.PASSWORD}`, when the prop's type is `FormFieldType = (typeof FORM_FIELD_TYPES)[keyof typeof FORM_FIELD_TYPES]`. `tsc` rejects a string outside that union at the call site, the same protection a route name gets. The constant object still exists — as the single declaration the union is derived from, and for reading the value back (a `switch`/lookup inside the component that owns it, or a runtime comparison like `status === AUTH_STATUSES.SIGNED_IN`). This exception covers only *authoring* a literal into an already-typed prop, not those other uses |
 
 **User-facing copy** lives in a `COPY` object per screen or component, colocated
 with it. This keeps the JSX readable and gives i18n a single seam to replace

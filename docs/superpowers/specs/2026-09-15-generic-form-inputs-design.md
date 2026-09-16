@@ -118,6 +118,33 @@ token field. It is not a way to bypass `type` for the common cases — a second
 call site reaching for it for anything other than a one-off native prop is a
 signal that `type` needs a new case, not that `inputProps` should grow.
 
+### D6 — `type` and `variant` are passed as literals at call sites
+
+`AGENTS.md` Rule 4 required `type={FORM_FIELD_TYPES.PASSWORD}` at every call
+site — the closed-set convention `AUTH_STATUSES`/`API_ERROR_CODES` already
+use. Discussed and changed for this prop specifically: once `type` is typed
+as `FormFieldType` (the union derived from `FORM_FIELD_TYPES`), `tsc` already
+rejects a string outside that union at the call site — the same protection
+route names get, which is why route names are the existing exception to this
+same rule. So `<FormField type="password">` is exactly as safe as
+`<FormField type={FORM_FIELD_TYPES.PASSWORD}>`, and the constant adds
+indirection without adding safety.
+
+`PasswordInput`'s `variant` prop gets the same treatment for the same reason
+(`variant="new"`, not `variant={PASSWORD_VARIANTS.NEW}`).
+
+This does **not** extend to reading these values back — a `switch`/lookup
+inside `FormField` that dispatches on `type`, or any future runtime
+comparison, still uses the constant (`AUTH_STATUSES.SIGNED_IN` in `RootStack`
+is unaffected). It also does not extend to `label` — user-facing copy has no
+`tsc`-enforced union backing it, so Rule 4's `COPY` requirement is unchanged;
+see the design's introduction of `FormField` in §5 for the label call sites,
+which keep `COPY.emailLabel`-style references.
+
+`AGENTS.md` Rule 4's table gains this exception, phrased generally (any prop
+already typed with its own derived union), not scoped to `FormField` alone —
+the reasoning is the same wherever it applies again.
+
 ## Design
 
 ### 1. `src/components/inputs/TextInput.tsx`
@@ -188,6 +215,13 @@ export const FORM_FIELD_TYPES = {
 export type FormFieldType = (typeof FORM_FIELD_TYPES)[keyof typeof FORM_FIELD_TYPES];
 ```
 
+Call sites pass `type` (and `PasswordInput`'s `variant`) as literals, per D6:
+
+```tsx
+<FormField control={control} label={COPY.emailLabel} name="email" type="email" />
+<FormField control={control} label={COPY.passwordLabel} name="password" type="newPassword" />
+```
+
 `Controller` renders one of `TextInput`/`EmailInput`/`PasswordInput` (with the
 right `variant`)/`CodeInput` (with `digits`) based on `type`, wiring
 `onBlur`/`onChange`/`value` from the field and `error?.message` from
@@ -201,12 +235,12 @@ during implementation, not here.
 
 - `FormTextField.tsx` and `FormTextField.test.tsx` are deleted.
 - All six screens (`SignIn`, `SignUp`, `ForgotPassword`, `ResetPassword`,
-  `ChangePassword`, `VerifyEmail`) import `FormField`/`FORM_FIELD_TYPES` from
-  `@/components` instead of `FormTextField`/`FIELD_TYPES` from
-  `../components/FormTextField`.
+  `ChangePassword`, `VerifyEmail`) import `FormField` from `@/components`
+  instead of `FormTextField`/`FIELD_TYPES` from `../components/FormTextField`
+  — `FORM_FIELD_TYPES` itself has no call-site import to add (D6).
 - `VerifyEmailScreen`'s code field passes `digits={VERIFICATION_CODE_DIGITS}`
   (the constant stays in `validations/`, only its consumer changes).
-- `ResetPasswordScreen`'s token field becomes `type={FORM_FIELD_TYPES.TEXT}`
+- `ResetPasswordScreen`'s token field becomes `type="text"`
   with `inputProps={{ autoCapitalize: 'none', autoComplete: 'off', autoCorrect: false }}`.
 - `SubmitButton.tsx` is untouched (D1).
 
@@ -235,6 +269,10 @@ the component import itself) checked for staleness.
 
 - `AGENTS.md` Rule 5 — add the exception from D1, one short paragraph, with
   `SubmitButton` named as the contrasting non-example.
+- `AGENTS.md` Rule 4 — **done already, ahead of implementation** (D6): the
+  table's "leave inline" column now covers a closed-set prop already typed
+  with its own derived union, phrased generally rather than scoped to
+  `FormField`.
 - `ARCHITECTURE.md` §2 tree — `src/components/` gains `inputs/` and `forms/`
   with their files; `modules/auth/components/` loses `FormTextField.tsx`. The
   "regra de fronteira entre módulos" section gains the same exception,
