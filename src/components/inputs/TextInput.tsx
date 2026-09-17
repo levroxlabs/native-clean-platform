@@ -5,7 +5,7 @@ import {
   View,
 } from 'react-native';
 
-import { cn } from '@/utils';
+import { classnames } from '@/utils';
 
 export interface TextInputProps extends Omit<NativeTextInputProps, 'value' | 'onChangeText'> {
   label: string;
@@ -26,7 +26,7 @@ export const TextInput = ({
     <Text className="mb-1 text-sm font-medium text-content">{label}</Text>
     <NativeTextInput
       accessibilityLabel={label}
-      className={cn(
+      className={classnames(
         'rounded-lg border border-border bg-surface px-3 py-3 text-base text-content',
         className,
       )}

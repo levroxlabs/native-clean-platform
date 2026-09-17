@@ -7,7 +7,7 @@ ou de rede, ele pertence a `src/hooks/` ou `src/lib/` em vez daqui.
 
 | Name             | Description                                                           |
 | ---------------- | --------------------------------------------------------------------- |
-| `cn(...inputs)`  | Combina nomes de classe condicionalmente e resolve conflitos do Tailwind (`cn('p-2','p-4')` → `'p-4'`). |
+| `classnames(...inputs)`  | Combina nomes de classe condicionalmente e resolve conflitos do Tailwind (`classnames('p-2','p-4')` → `'p-4'`). |
 
 ## Conventions
 
