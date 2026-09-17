@@ -1,4 +1,5 @@
 export { api } from './api/client';
+export { parseOrThrow } from './api/parseOrThrow';
 export {
   type AuthorizationHandlers,
   configureAuthorization,

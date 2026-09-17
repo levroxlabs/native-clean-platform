@@ -18,6 +18,7 @@ se registra nele.
 | ------------------------------ | ---------------------------------------------------------------- |
 | `configureAuthorization(h)`    | Registra `{ getAccessToken, refreshAccessToken }`. Passe `null` para desregistrar. |
 | `startConnectivityWatch()`     | Liga o NetInfo ao `onlineManager` do TanStack Query. Chamado uma vez pelo `App.tsx`. |
+| `parseOrThrow(schema, payload)` | Valida a resposta de qualquer endpoint contra um schema Zod e devolve o dado tipado; num drift, lança `ApiError` com `UNEXPECTED_RESPONSE`. Único, para que todo módulo trate contrato quebrado do mesmo jeito. |
 
 ## Constants
 
@@ -80,6 +81,12 @@ se registra nele.
 - **Esta camada não sabe o que é refresh token.** Onde ele mora, o que
   `REFRESH_TOKEN_REUSED` significa e quais falhas encerram sessão são assunto de
   `src/modules/auth/`.
+- **`parseOrThrow` nasceu em `modules/auth/api/authApi.ts` e foi promovido para
+  cá** quando ficou claro que qualquer módulo que valide resposta de rede com
+  Zod precisa da mesma coisa — parsear e, num drift, lançar `ApiError` com
+  `UNEXPECTED_RESPONSE` em vez de deixar o dado errado seguir tipado como se
+  estivesse certo. Ele não conhece nenhum schema específico: recebe o `schema`
+  como argumento, então continua sem saber nada de domínio.
 - **Timeout e cancelamento são do axios**, não escritos à mão. Não use
   `AbortSignal.timeout()` em lugar nenhum deste repo: o React Native faz
   polyfill de `AbortSignal` com `abort-controller@3`, que não tem o método

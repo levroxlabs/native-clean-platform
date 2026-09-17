@@ -1,36 +1,10 @@
-import type { z } from 'zod';
-
-import { API_ERROR_CODES, ApiError, api, CLIENT_FAILURE_STATUS } from '@/lib';
+import { api, parseOrThrow } from '@/lib';
 
 import type { Credentials } from '../validations';
 import { type SessionTokens, sessionTokensSchema, type User, userSchema } from './schemas';
 
-const CONTRACT_DRIFT_MESSAGE = 'The API response did not match the expected shape:';
-
 /** Body transport, stated rather than inherited from the server default. */
 const REFRESH_TRANSPORT_BODY = 'body';
-
-/**
- * Parsing responses — not just requests — is what turns a silent contract drift
- * between the two repositories into a loud, located failure. It is re-thrown as
- * an `ApiError` so callers still handle exactly one error type.
- */
-const parseOrThrow = <TSchema extends z.ZodType>(
-  schema: TSchema,
-  payload: unknown,
-): z.infer<TSchema> => {
-  const parsed = schema.safeParse(payload);
-
-  if (!parsed.success) {
-    throw new ApiError({
-      status: CLIENT_FAILURE_STATUS,
-      code: API_ERROR_CODES.UNEXPECTED_RESPONSE,
-      message: `${CONTRACT_DRIFT_MESSAGE} ${parsed.error.message}`,
-    });
-  }
-
-  return parsed.data;
-};
 
 export const login = async (credentials: Credentials): Promise<SessionTokens> => {
   const payload = await api.post('/auth/login', {
