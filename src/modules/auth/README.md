@@ -37,6 +37,44 @@ escolher entre o stack logado e o deslogado. Fala com os onze endpoints de
 | `AuthStackParamList` | Parâmetros das rotas do fluxo deslogado. `SignIn` e `VerifyEmail` aceitam um `email` opcional; `ResetPassword` exige um. |
 | `AccountStackParamList` | Parâmetros das rotas da área logada (`Account`, `ChangePassword`). |
 
+## Flow
+
+Por dentro, toda tela passa por `useAuth()` até o `AuthProvider`, que fala com
+a API e com o keychain. Pra fora, o módulo cruza a fronteira em quatro pontos:
+`components/forms` (os campos de formulário), `lib/api` (onde o
+`AuthProvider` registra o bearer token via `configureAuthorization`),
+`navigation/RootStack` (que lê `status` para escolher `AuthStack` ou
+`AppStack`) e `errors` (onde `App.tsx` registra `AUTH_ERROR_COPY`).
+
+```mermaid
+flowchart TD
+  subgraph Auth["modules/auth"]
+    Screens["screens<br/>(SignIn, SignUp, VerifyEmail, ForgotPassword,<br/>ResetPassword, Account, ChangePassword)"]
+    UseAuth["useAuth()"]
+    Provider["AuthContext / AuthProvider"]
+    Api["api/authApi"]
+    Storage["storage (SecureStore)"]
+
+    Screens --> UseAuth --> Provider
+    Provider --> Api
+    Provider --> Storage
+  end
+
+  subgraph Outside["fora do módulo"]
+    Forms["components/forms<br/>(FormField)"]
+    LibApi["lib/api<br/>(client + interceptors)"]
+    RootStack["navigation/RootStack"]
+    ErrorsCopy["errors<br/>(copy.ts)"]
+    Backend[("api-clean-platform<br/>/auth/*")]
+  end
+
+  Screens --> Forms
+  Api --> LibApi --> Backend
+  Provider -. "configureAuthorization" .-> LibApi
+  RootStack -- "status" --> UseAuth
+  Provider -. "AUTH_ERROR_COPY<br/>(registrado por App.tsx)" .-> ErrorsCopy
+```
+
 ## Conventions
 
 - **`loading` é só o boot.** Cobre ler o keychain e o primeiro `/auth/me`, e

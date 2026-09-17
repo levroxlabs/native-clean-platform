@@ -17,7 +17,8 @@ modules/<name>/
   constants.ts  constantes compartilhadas dentro do módulo
   types.ts
   index.ts      o ÚNICO ponto de entrada que outros módulos podem importar
-  README.md     obrigatório — veja AGENTS.md
+  README.md     obrigatório — veja AGENTS.md, inclui uma seção `## Flow` com
+                diagrama Mermaid (telas → hooks → API, e conexão com fora)
 ```
 
 ## Modules

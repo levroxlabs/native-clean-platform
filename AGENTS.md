@@ -61,8 +61,9 @@ the module exports and what each export is for.
 everything except code identifiers and folder/file names, which stay in
 English (they must match the actual code). This is the one carve-out from
 [Rule 1](#1-english-only). Section headings (`## Components`, `## Hooks`,
-`## Functions`, `## Constants`, `## Conventions`) may stay in English too,
-since they are the structural labels a reader scans for across every module.
+`## Functions`, `## Constants`, `## Flow`, `## Conventions`) may stay in
+English too, since they are the structural labels a reader scans for across
+every module.
 
 ```md
 # <Module name>
@@ -78,12 +79,39 @@ One paragraph: what this module is responsible for, and what it is not.
 ## Constants
 | Name | Description |
 
+## Flow
+```mermaid
+flowchart TD
+  ...
+```
+
 ## Conventions
 Anything specific to this module.
 ```
 
 Omit sections that do not apply. **Update the README in the same change that
 adds, removes, or renames an export** — a stale README is worse than none.
+
+### `## Flow`
+
+Required only for a module under `src/modules/<name>/` — a top-level folder
+under `src/` (`utils/`, `lib/`, `theme/`, …) is a flat set of exports with no
+flow of its own, so it stays without this section. A module has screens,
+navigation, and calls to the backend, and that is exactly what is worth
+drawing.
+
+The diagram is a Mermaid `flowchart` **inline in the README**, not an
+exported image: it renders natively wherever the repo is hosted, diffs like
+the text it is, and needs no export step to stay in sync with the code it
+describes. Show two things — the flow inside the module (screen → hook →
+context/provider → API call), and where it crosses the module boundary
+(the top-level folders or modules it talks to: `navigation`, `lib/api`,
+`errors`, `components`, another module's `index.ts`). A subgraph per side
+keeps that boundary visible in the diagram itself.
+
+**Update the diagram in the same change that changes the flow it draws** —
+same rule as the rest of this README, extended to a diagram instead of a
+table row.
 
 ## 4. No magic strings or numbers
 
