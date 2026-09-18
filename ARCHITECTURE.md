@@ -57,6 +57,9 @@ jest.setup.ts               EXPO_PUBLIC_* de teste + keychain em memória (mock 
 docs/superpowers/           specs e planos das decisões já tomadas (testes unitários, E2E)
 src/
 ├── components/               primitivas de UI conhecidas de antemão como multi-app — exceção documentada à regra do segundo consumidor (ver abaixo, não "vazio")
+│   ├── FormErrorMessage.tsx  mensagem de erro de formulário; `null` não renderiza nada
+│   ├── SubmitButton.tsx      botão de submit com spinner + disabled via `isPending`
+│   ├── *.test.tsx            colocados, um por componente
 │   ├── inputs/               primitivas puras, sem react-hook-form
 │   │   ├── TextInput.tsx     base: label, value/onChangeText, error, className
 │   │   ├── EmailInput.tsx    teclado/autocomplete de email
@@ -108,7 +111,6 @@ src/
 ├── modules/                  um módulo hoje: auth
 │   ├── auth/
 │   │   ├── api/             authApi.ts + schemas.ts (respostas da API) + testes colocados
-│   │   ├── components/      FormErrorMessage.tsx, SubmitButton.tsx — internos deste módulo
 │   │   ├── hooks/           useAuth.ts
 │   │   ├── context/         AuthContext.tsx — o context E o provider no mesmo arquivo + teste
 │   │   ├── navigation/      AuthStack.tsx, types.ts
@@ -154,12 +156,14 @@ Um componente só sai de dentro de um módulo para `src/components/` quando um
 
 **Exceção:** uma primitiva de design system que qualquer app clonado deste
 boilerplate vai precisar — hoje, os inputs de formulário em
-`src/components/inputs/` e `forms/` — pode nascer direto em `src/components/`
-mesmo com um consumidor só neste repositório. O "segundo consumidor" aqui é o
-próximo app, não o próximo módulo. `SubmitButton` continua em
-`modules/auth/components/` sob a regra normal: não há um argumento
-equivalente de "todo app precisa exatamente deste botão", então movê-lo agora
-seria a especulação que a regra existe para barrar.
+`src/components/inputs/`, `forms/`, e `FormErrorMessage`/`SubmitButton` na
+raiz — pode nascer (ou ser promovida) direto para `src/components/` mesmo com
+um consumidor só neste repositório. O "segundo consumidor" aqui é o próximo
+app, não o próximo módulo: qualquer tela de formulário de qualquer app
+clonado precisa de uma mensagem de erro e de um botão de submit com estado
+de pending, então os dois saíram de `modules/auth/components/` junto com os
+inputs — não é mais o caso de "não há um argumento equivalente" que mantinha
+o `SubmitButton` para trás.
 
 **Sem lint nem dependency-cruiser checando isso hoje.** Diferente do repo da
 API, que já tem uma tabela de fronteira equivalente pronta para o dia em que

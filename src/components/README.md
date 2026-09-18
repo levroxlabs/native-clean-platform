@@ -10,12 +10,17 @@ próximo módulo deste repositório.
 Duas subpastas desde o primeiro export, não uma organização especulativa:
 `inputs/` e `forms/` são categorias genuinamente distintas (UI pura vs.
 integração com uma lib de formulário) — o oposto do "começa flat" que ainda
-vale para `modules/<m>/components/`.
+vale para `modules/<m>/components/`. `FormErrorMessage` e `SubmitButton`
+ficam soltos na raiz pelo mesmo princípio invertido: nenhum dos dois forma
+uma categoria própria com só um export cada, então uma subpasta por
+componente seria a divisão especulativa que a regra evita.
 
 ## Components
 
 | Name | Description |
 | ---- | ------------- |
+| `FormErrorMessage` | Mensagem de erro de formulário: `message: string \| null`, não renderiza nada quando `null`. |
+| `SubmitButton` | Botão de submit com estado de pending: troca o label por um spinner e desabilita via `isPending`. |
 | `TextInput` | Primitiva base: label, `value`/`onChangeText` controlados, `error?`, `className`. Aceita qualquer prop nativa de `TextInput` via passthrough. |
 | `EmailInput` | `TextInput` com teclado e autocomplete de e-mail fixados. |
 | `PasswordInput` | `TextInput` com `secureTextEntry` e `variant: 'current' \| 'new'` — só o `autoComplete` muda entre os dois. |

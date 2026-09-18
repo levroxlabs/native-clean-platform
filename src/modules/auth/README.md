@@ -39,40 +39,62 @@ escolher entre o stack logado e o deslogado. Fala com os onze endpoints de
 
 ## Flow
 
-Por dentro, toda tela passa por `useAuth()` até o `AuthProvider`, que fala com
-a API e com o keychain. Pra fora, o módulo cruza a fronteira em quatro pontos:
-`components/forms` (os campos de formulário), `lib/api` (onde o
-`AuthProvider` registra o bearer token via `configureAuthorization`),
-`navigation/RootStack` (que lê `status` para escolher `AuthStack` ou
-`AppStack`) e `errors` (onde `App.tsx` registra `AUTH_ERROR_COPY`).
+Cada tela do fluxo deslogado (`AuthStack`) e da área logada (`AccountStack`)
+aparece como nó próprio, com a navegação real entre elas. `SignIn`,
+`VerifyEmail`, `ChangePassword` e `Account` passam pelo `AuthProvider` via
+`useAuth()`; `SignUp`, `ForgotPassword` e `ResetPassword` não escrevem nem
+leem sessão, então chamam a API direto pela própria `useMutation` — a mesma
+distinção já descrita em prosa nas Conventions abaixo. Pra fora do módulo, o
+diagrama cruza a fronteira em `lib/api` (onde o `AuthProvider` registra o
+bearer token via `configureAuthorization`), `navigation/RootStack` (que lê
+`status`) e `errors` (onde `App.tsx` registra `AUTH_ERROR_COPY`).
 
 ```mermaid
 flowchart TD
-  subgraph Auth["modules/auth"]
-    Screens["screens<br/>(SignIn, SignUp, VerifyEmail, ForgotPassword,<br/>ResetPassword, Account, ChangePassword)"]
-    UseAuth["useAuth()"]
-    Provider["AuthContext / AuthProvider"]
-    Api["api/authApi"]
-    Storage["storage (SecureStore)"]
-
-    Screens --> UseAuth --> Provider
-    Provider --> Api
-    Provider --> Storage
+  subgraph AuthStack["AuthStack (deslogado)"]
+    SignIn["SignIn"]
+    SignUp["SignUp"]
+    VerifyEmail["VerifyEmail"]
+    ForgotPassword["ForgotPassword"]
+    ResetPassword["ResetPassword"]
   end
 
-  subgraph Outside["fora do módulo"]
-    Forms["components/forms<br/>(FormField)"]
-    LibApi["lib/api<br/>(client + interceptors)"]
-    RootStack["navigation/RootStack"]
-    ErrorsCopy["errors<br/>(copy.ts)"]
-    Backend[("api-clean-platform<br/>/auth/*")]
+  subgraph AccountStack["AccountStack (logado)"]
+    Account["Account"]
+    ChangePassword["ChangePassword"]
   end
 
-  Screens --> Forms
-  Api --> LibApi --> Backend
+  SignIn -- "Cadastrar" --> SignUp
+  SignIn -- "Esqueci a senha" --> ForgotPassword
+  SignUp -- "startSignUp OK" --> VerifyEmail
+  ForgotPassword -- "requestPasswordReset OK" --> ResetPassword
+  ResetPassword -- "resetPassword OK" --> SignIn
+
+  Account -- "Trocar senha" --> ChangePassword
+  ChangePassword -- "changePassword OK" --> Account
+
+  Provider["AuthContext / AuthProvider"]
+  Api["api/authApi"]
+  Storage["storage (SecureStore)"]
+
+  SignIn -. "useAuth().signIn" .-> Provider
+  VerifyEmail -. "useAuth().confirmSignUp" .-> Provider
+  ChangePassword -. "useAuth().changePassword" .-> Provider
+  Account -. "signOut / signOutEverywhere" .-> Provider
+
+  SignUp -. "useMutation(startSignUp)" .-> Api
+  VerifyEmail -. "useMutation(resendVerificationCode)" .-> Api
+  ForgotPassword -. "useMutation(requestPasswordReset)" .-> Api
+  ResetPassword -. "useMutation(resetPassword)" .-> Api
+
+  Provider --> Api
+  Provider --> Storage
+  Api --> LibApi["lib/api (client + interceptors)"]
+  LibApi --> Backend[("api-clean-platform /auth/*")]
+
+  RootStack["navigation/RootStack"] -- "status" --> Provider
   Provider -. "configureAuthorization" .-> LibApi
-  RootStack -- "status" --> UseAuth
-  Provider -. "AUTH_ERROR_COPY<br/>(registrado por App.tsx)" .-> ErrorsCopy
+  Provider -. "AUTH_ERROR_COPY (via App.tsx)" .-> ErrorsCopy["errors (copy.ts)"]
 ```
 
 ## Conventions
@@ -198,3 +220,8 @@ flowchart TD
   `FormTextField` deste módulo — ele foi promovido junto com as primitivas de
   input, porque qualquer app clonado deste boilerplate precisa dos mesmos
   tipos de campo. Ver `src/components/README.md`.
+- **`FormErrorMessage` e `SubmitButton` também vêm de `@/components`.**
+  Nasceram aqui, mas qualquer tela de formulário de qualquer app clonado
+  deste boilerplate precisa dos dois — a mesma exceção do segundo consumidor
+  que já promoveu os inputs, não "um segundo módulo passou a precisar
+  deles".

@@ -22,6 +22,6 @@ importadas pelo stack.
   usuário procura por elas, e é onde a assimetria entre `signOut` e
   `signOutEverywhere` está documentada.
 - Os botões são `Pressable` com classes NativeWind, e **não** o `SubmitButton`
-  do módulo `auth`: a regra 5 do `AGENTS.md` promove um componente para
-  `src/components/` quando um **segundo módulo** precisa dele, e `src/screens/`
-  não é módulo.
+  de `src/components/`: este componente tem `isPending`, mas nenhuma tela
+  aqui submete um formulário — só navega, sem estado pendente para o botão
+  representar.
