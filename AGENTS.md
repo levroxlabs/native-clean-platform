@@ -455,3 +455,24 @@ expression (`() => signOut()`, `() => navigation.navigate('ChangePassword')`)
 reads fine inline; a `try`/`catch`, more than one statement, or anything that
 would otherwise carry a comment is worth pulling out and naming. Not
 machine-checked — hold the line in review.
+
+---
+
+## 14. No nested `await`
+
+Never pass an `await` expression directly as an argument to another call that
+is itself `await`ed. Assign the inner result to a named `const` first:
+
+```ts
+// Good
+const signInResponse = await login(credentials);
+await openSession(signInResponse);
+
+// Bad
+await openSession(await login(credentials));
+```
+
+More lines, but the intermediate value gets a name that says what it is, and
+a debugger can stop on it — a nested `await` hides that value behind an
+anonymous argument position. This applies regardless of how many nested calls
+are chained. Not machine-checked — hold the line in review.

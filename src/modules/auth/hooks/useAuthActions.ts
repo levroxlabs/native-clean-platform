@@ -44,7 +44,8 @@ export const useAuthActions = ({
 
   const establishSession = useCallback(
     async (credentials: Credentials) => {
-      await openSession(await login(credentials));
+      const signInResponse = await login(credentials);
+      await openSession(signInResponse);
     },
     [openSession],
   );
@@ -55,7 +56,8 @@ export const useAuthActions = ({
     mutationFn: async ({ email, code, password }: ConfirmSignUpValues) => {
       // `confirmPassword` is a client-only field and is deliberately not
       // forwarded: the API's body has no place for it.
-      await openSession(await confirmSignUpRequest({ email, code, password }));
+      const confirmSignUpResponse = await confirmSignUpRequest({ email, code, password });
+      await openSession(confirmSignUpResponse);
     },
     networkMode: 'always',
   });
@@ -66,7 +68,8 @@ export const useAuthActions = ({
       // unchanged. What must happen is the write — the API revoked every other
       // session, so the refresh token on disk is dead and its replacement is in
       // this response.
-      await adoptTokens(await changePasswordRequest({ currentPassword, newPassword }));
+      const changePasswordResponse = await changePasswordRequest({ currentPassword, newPassword });
+      await adoptTokens(changePasswordResponse);
     },
     networkMode: 'always',
   });
