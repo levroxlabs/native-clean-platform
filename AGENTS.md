@@ -263,8 +263,8 @@ flows against a dev client build.
   compare against literal values by design. Every other rule still applies.
 
 ```bash
-pnpm test       # jest --watchAll
-pnpm test:ci    # jest --ci
+pnpm test       # jest --watchAll --coverage
+pnpm test:ci    # jest --ci --coverage
 ```
 
 `pnpm test` is intentionally **not** part of `pnpm check` — typecheck and

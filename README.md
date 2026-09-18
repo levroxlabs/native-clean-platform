@@ -48,8 +48,8 @@ pnpm typecheck          # tsc --noEmit
 pnpm lint               # biome check
 pnpm lint:fix           # biome check --write (correções seguras)
 pnpm format             # biome format --write
-pnpm test               # jest --watchAll
-pnpm test:ci            # jest --ci
+pnpm test               # jest --watchAll --coverage
+pnpm test:ci            # jest --ci --coverage
 pnpm e2e:build:ios      # builda e instala o dev client no simulador iOS
 pnpm e2e:build:android  # builda e instala o dev client no emulador Android
 pnpm test:e2e           # roda os flows do Maestro (.maestro/) no dev client já instalado

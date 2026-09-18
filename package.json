@@ -50,8 +50,8 @@
     "format": "biome format --write .",
     "typecheck": "tsc --noEmit",
     "check": "pnpm typecheck && pnpm lint",
-    "test": "jest --watchAll",
-    "test:ci": "jest --ci",
+    "test": "jest --watchAll --coverage",
+    "test:ci": "jest --ci --coverage",
     "e2e:build:ios": "expo run:ios",
     "e2e:build:android": "expo run:android",
     "test:e2e": "maestro test .maestro"
