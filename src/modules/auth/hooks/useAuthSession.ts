@@ -79,7 +79,7 @@ export const useAuthSession = (): AuthSessionValue => {
   );
 
   /**
-   * `fetchQuery`, not an invalidation: the user has to be in the cache before
+   * `query`, not an invalidation: the user has to be in the cache before
    * this resolves, so the gate swaps in the same tick the screen stops
    * submitting. `networkMode: 'always'` for the same reason as `meQuery` above —
    * this imperative call has its own default and does not inherit the hook's
@@ -88,7 +88,7 @@ export const useAuthSession = (): AuthSessionValue => {
   const openSession = useCallback(
     async (tokens: SessionTokens) => {
       await adoptTokens(tokens);
-      await queryClient.fetchQuery({
+      await queryClient.query({
         queryKey: AUTH_QUERY_KEYS.ME,
         queryFn: fetchMe,
         networkMode: 'always',
