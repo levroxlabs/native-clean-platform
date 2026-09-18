@@ -1,0 +1,4 @@
+appId: com.levrox.nativecleanplatform
+---
+- launchApp
+- assertVisible: "Signed-in area"

@@ -33,10 +33,6 @@ pnpm test:e2e           # roda todos os flows desta pasta contra o dev client j�
 dependência com módulo nativo, mudança em `app.json`, etc). Para iterar em
 flows, basta manter o dev client aberto e rodar `pnpm test:e2e` de novo.
 
-`pnpm test:e2e` falha com "no flows found" enquanto esta pasta não tiver
-nenhum flow — isso é esperado até o primeiro ser escrito (veja a seção
-abaixo).
-
 ## Convenção de seleção de elementos
 
 O Maestro seleciona elementos por texto visível ou por `testID`. Prefira
@@ -48,8 +44,10 @@ seguindo a [Regra 4 do AGENTS.md](../AGENTS.md#4-no-magic-strings-or-numbers).
 
 ## Convenção de nomenclatura dos flows
 
-Ainda não há nenhum flow nesta pasta — é só infraestrutura por enquanto,
-já que o app hoje só tem a tela `Home` e a autenticação está
-pausada até o backend (em outro repositório) ficar pronto. Quando o
-primeiro flow for escrito, nomeie o arquivo pelo fluxo que ele cobre em
-`kebab-case` (`sign-in.yaml`, `edit-profile.yaml`), um flow por arquivo.
+Nomeie o arquivo pelo fluxo que ele cobre, em `kebab-case`
+(`sign-in.yaml`, `edit-profile.yaml`), um flow por arquivo.
+
+- `launch-app.yaml`: abre o app e confirma que a tela `Home` aparece.
+  Existe para validar a instalação do Maestro e o dev client — não é um
+  fluxo de produto. O app hoje só tem essa tela, já que a autenticação
+  está pausada até o backend (em outro repositório) ficar pronto.
