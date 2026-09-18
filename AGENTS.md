@@ -103,11 +103,20 @@ drawing.
 The diagram is a Mermaid `flowchart` **inline in the README**, not an
 exported image: it renders natively wherever the repo is hosted, diffs like
 the text it is, and needs no export step to stay in sync with the code it
-describes. Show two things — the flow inside the module (screen → hook →
-context/provider → API call), and where it crosses the module boundary
-(the top-level folders or modules it talks to: `navigation`, `lib/api`,
-`errors`, `components`, another module's `index.ts`). A subgraph per side
-keeps that boundary visible in the diagram itself.
+describes. Show two things — the flow inside the module, and where it
+crosses the module boundary (the top-level folders or modules it talks to:
+`navigation`, `lib/api`, `errors`, `components`, another module's
+`index.ts`). A subgraph per side keeps that boundary visible in the diagram
+itself.
+
+**Every screen is its own node, connected by the real navigation between
+them** — never one box listing every screen name. A module's screens are
+the whole reason it earns a diagram a plain folder doesn't; collapsing them
+back into a single node throws away exactly the detail worth drawing. Below
+that, show whatever call each screen actually makes (a shared hook, its own
+mutation, no call at all) — that shape is specific to the module, so draw
+what is there rather than forcing every module into the same internal
+layout.
 
 **Update the diagram in the same change that changes the flow it draws** —
 same rule as the rest of this README, extended to a diagram instead of a
