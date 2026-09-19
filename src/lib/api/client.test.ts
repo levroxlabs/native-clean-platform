@@ -193,6 +193,16 @@ describe('api.delete', () => {
     expect(lastConfig.method).toBe('delete');
     expect(lastConfig.data).toBeUndefined();
   });
+
+  it('serializes the body when one is given', async () => {
+    respondWith(OK_STATUS, {});
+
+    await api.delete(PATH, { password: 'sup3rS3cret!' });
+
+    expect(lastConfig.method).toBe('delete');
+    expect(lastConfig.data).toBe(JSON.stringify({ password: 'sup3rS3cret!' }));
+    expect(lastConfig.headers.get('Content-Type')).toBe('application/json');
+  });
 });
 
 describe('the refresh retry', () => {

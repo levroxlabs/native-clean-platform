@@ -53,6 +53,6 @@ export const api = {
     send<TResponse>(path, HTTP_METHODS.POST, body),
   patch: <TResponse>(path: string, body?: unknown): Promise<TResponse> =>
     send<TResponse>(path, HTTP_METHODS.PATCH, body),
-  delete: <TResponse>(path: string): Promise<TResponse> =>
-    send<TResponse>(path, HTTP_METHODS.DELETE),
+  delete: <TResponse>(path: string, body?: unknown): Promise<TResponse> =>
+    send<TResponse>(path, HTTP_METHODS.DELETE, body),
 };
