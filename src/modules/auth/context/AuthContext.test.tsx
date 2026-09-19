@@ -12,6 +12,7 @@ import {
   logoutEverywhere,
   refreshSession,
 } from '../api/authApi';
+import { AUTH_QUERY_KEYS } from '../constants';
 import { useAuth } from '../hooks/useAuth';
 import { clearRefreshToken, readRefreshToken, writeRefreshToken } from '../storage';
 import { AuthProvider } from './AuthContext';
@@ -132,17 +133,16 @@ const Probe = () => {
   );
 };
 
-const renderAuth = async () => {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-
-  return render(
+const renderAuth = async (
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) =>
+  render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Probe />
       </AuthProvider>
     </QueryClientProvider>,
   );
-};
 
 beforeEach(async () => {
   jest.clearAllMocks();
@@ -188,6 +188,24 @@ describe('AuthProvider', () => {
     expect(await screen.findByText('status:signedOut')).toBeTruthy();
     await expect(readRefreshToken()).resolves.toBeNull();
     expect(mockFetchMe).not.toHaveBeenCalled();
+  });
+
+  it('drops the cached sessions when the stored session is rejected, so the next account never sees them', async () => {
+    await writeRefreshToken(REFRESH_TOKEN);
+    mockRefreshSession.mockRejectedValue(
+      new ApiError({
+        status: 401,
+        code: API_ERROR_CODES.INVALID_REFRESH_TOKEN,
+        message: 'Invalid or expired refresh token',
+      }),
+    );
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(AUTH_QUERY_KEYS.SESSIONS, []);
+
+    await renderAuth(queryClient);
+
+    expect(await screen.findByText('status:signedOut')).toBeTruthy();
+    expect(queryClient.getQueryData(AUTH_QUERY_KEYS.SESSIONS)).toBeUndefined();
   });
 
   it('clears storage when a spent refresh token is reused', async () => {
@@ -254,12 +272,12 @@ describe('AuthProvider', () => {
     await expect(readRefreshToken()).resolves.toBe(REFRESH_TOKEN);
   });
 
-  const givenSignedIn = async () => {
+  const givenSignedIn = async (queryClient?: QueryClient) => {
     await writeRefreshToken(REFRESH_TOKEN);
     mockRefreshSession.mockResolvedValue(rotatedPair);
     mockFetchMe.mockResolvedValue(PROFILE);
 
-    await renderAuth();
+    await renderAuth(queryClient);
     await screen.findByText('status:signedIn');
   };
 
@@ -281,6 +299,22 @@ describe('AuthProvider', () => {
     expect(mockChangePassword).toHaveBeenCalledWith({
       currentPassword: PASSWORD_CHANGE.currentPassword,
       newPassword: PASSWORD_CHANGE.newPassword,
+    });
+  });
+
+  it('marks the cached sessions stale after a password change, which revoked every other one', async () => {
+    mockChangePassword.mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REPLACEMENT_REFRESH_TOKEN,
+    });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(AUTH_QUERY_KEYS.SESSIONS, []);
+    await givenSignedIn(queryClient);
+
+    await fireEvent.press(screen.getByText(CHANGE_PASSWORD_LABEL));
+
+    await waitFor(() => {
+      expect(queryClient.getQueryState(AUTH_QUERY_KEYS.SESSIONS)?.isInvalidated).toBe(true);
     });
   });
 

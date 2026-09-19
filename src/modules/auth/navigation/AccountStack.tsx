@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { AccountScreen } from '../screens/AccountScreen';
 import { ChangePasswordScreen } from '../screens/ChangePasswordScreen';
+import { SessionsScreen } from '../screens/SessionsScreen';
 import type { AccountStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<AccountStackParamList>();
@@ -10,6 +11,7 @@ const Stack = createNativeStackNavigator<AccountStackParamList>();
 const SCREEN_TITLES = {
   account: 'Account',
   changePassword: 'Change password',
+  sessions: 'Active sessions',
 } as const;
 
 /**
@@ -27,6 +29,11 @@ export const AccountStack = () => (
       name="ChangePassword"
       component={ChangePasswordScreen}
       options={{ title: SCREEN_TITLES.changePassword }}
+    />
+    <Stack.Screen
+      name="Sessions"
+      component={SessionsScreen}
+      options={{ title: SCREEN_TITLES.sessions }}
     />
   </Stack.Navigator>
 );

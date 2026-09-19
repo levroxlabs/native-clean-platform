@@ -8,6 +8,7 @@ import {
   logout,
   logoutEverywhere,
 } from '../api/authApi';
+import { AUTH_QUERY_KEYS } from '../constants';
 import { readRefreshToken } from '../storage';
 import type { ChangePasswordValues, ConfirmSignUpValues, Credentials } from '../validations';
 import type { AuthSessionValue } from './useAuthSession';
@@ -70,6 +71,8 @@ export const useAuthActions = ({
       // this response.
       const changePasswordResponse = await changePasswordRequest({ currentPassword, newPassword });
       await adoptTokens(changePasswordResponse);
+      // The revocation above changed what `/auth/sessions` answers.
+      queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEYS.SESSIONS });
     },
     networkMode: 'always',
   });

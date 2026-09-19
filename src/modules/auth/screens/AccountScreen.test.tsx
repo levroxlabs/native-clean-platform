@@ -15,6 +15,7 @@ const mockUseErrorToast = useErrorToast as jest.MockedFunction<typeof useErrorTo
 const BUTTON_ROLE = 'button';
 const VALID_EMAIL = 'user@example.com';
 const CHANGE_PASSWORD_LABEL = 'Change password';
+const SESSIONS_LABEL = 'Active sessions';
 const SIGN_OUT_LABEL = 'Sign out';
 const SIGN_OUT_EVERYWHERE_LABEL = 'Sign out everywhere';
 /** The Alert's destructive button carries the same label as the plain sign-out one. */
@@ -32,6 +33,7 @@ const mockSignOut = jest.fn(async () => undefined);
 const mockSignOutEverywhere = jest.fn(async () => undefined);
 
 const changePasswordButton = () => screen.getByRole(BUTTON_ROLE, { name: CHANGE_PASSWORD_LABEL });
+const sessionsButton = () => screen.getByRole(BUTTON_ROLE, { name: SESSIONS_LABEL });
 const signOutButton = () => screen.getByRole(BUTTON_ROLE, { name: SIGN_OUT_LABEL });
 const signOutEverywhereButton = () =>
   screen.getByRole(BUTTON_ROLE, { name: SIGN_OUT_EVERYWHERE_LABEL });
@@ -88,6 +90,13 @@ describe('AccountScreen', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('ChangePassword');
   });
 
+  it('opens the list of active sessions', async () => {
+    await renderScreen();
+    await fireEvent.press(sessionsButton());
+
+    expect(navigation.navigate).toHaveBeenCalledWith('Sessions');
+  });
+
   it('signs out on this device without asking', async () => {
     await renderScreen();
     await fireEvent.press(signOutButton());
@@ -131,6 +140,7 @@ describe('AccountScreen', () => {
     await renderScreen();
 
     expect(changePasswordButton()).toBeDisabled();
+    expect(sessionsButton()).toBeDisabled();
     expect(signOutButton()).toBeDisabled();
     expect(signOutEverywhereButton()).toBeDisabled();
   });

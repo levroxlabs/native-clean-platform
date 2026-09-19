@@ -63,6 +63,9 @@ export const useAuthSession = (): AuthSessionValue => {
     applyToken(null);
     await clearRefreshToken();
     queryClient.removeQueries({ queryKey: AUTH_QUERY_KEYS.ME });
+    // Not only the profile: the next account to sign in on this device would
+    // otherwise see this one's session list until its own refetch landed.
+    queryClient.removeQueries({ queryKey: AUTH_QUERY_KEYS.SESSIONS });
   }, [applyToken, queryClient]);
 
   /**

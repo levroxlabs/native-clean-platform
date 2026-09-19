@@ -5,6 +5,7 @@ import { type Metrics, SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorToastProvider } from '@/errors';
 
 import { useAuth } from '../hooks/useAuth';
+import { useSessions } from '../hooks/useSessions';
 import { AccountStack } from './AccountStack';
 
 /**
@@ -13,17 +14,29 @@ import { AccountStack } from './AccountStack';
  * the real hook running and throw for a missing provider.
  */
 jest.mock('../hooks/useAuth');
+jest.mock('../hooks/useSessions');
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
+const mockUseSessions = useSessions as jest.MockedFunction<typeof useSessions>;
 
 const VALID_EMAIL = 'user@example.com';
 const CHANGE_PASSWORD_LABEL = 'Change password';
+const SESSIONS_LABEL = 'Active sessions';
 
 const PROFILE = {
   id: '0d3d5d8a-6f2e-4d2e-9f1a-6d0f9a3b5c21',
   email: VALID_EMAIL,
   emailVerifiedAt: null,
   createdAt: '2026-09-01T12:00:00.000Z',
+};
+
+const SESSION = {
+  id: '5b1f6c0e-2d7a-4c53-8a49-0e6f3d9b7a12',
+  createdAt: '2026-09-19T10:00:00.000Z',
+  expiresAt: '2026-11-18T10:00:00.000Z',
+  ip: '203.0.113.7',
+  deviceLabel: 'Chrome on Android',
+  startedAt: '2026-09-01T12:00:00.000Z',
 };
 
 /** `initialMetrics` skips the native measurement, which never resolves under Jest. */
@@ -49,6 +62,13 @@ const renderStack = async () =>
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockUseSessions.mockReturnValue({
+    data: [SESSION],
+    isPending: false,
+    isError: false,
+    isRefetching: false,
+    refetch: jest.fn(),
+  } as never);
   mockUseAuth.mockReturnValue({
     status: 'signedIn',
     user: PROFILE,
@@ -76,5 +96,13 @@ describe('AccountStack', () => {
     await fireEvent.press(screen.getByRole('button', { name: CHANGE_PASSWORD_LABEL }));
 
     expect(await screen.findByText('Change your password')).toBeTruthy();
+  });
+
+  it('navigates to the active sessions screen on "Active sessions"', async () => {
+    await renderStack();
+
+    await fireEvent.press(screen.getByRole('button', { name: SESSIONS_LABEL }));
+
+    expect(await screen.findByText('Chrome on Android')).toBeTruthy();
   });
 });

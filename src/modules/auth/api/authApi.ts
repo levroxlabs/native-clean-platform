@@ -1,7 +1,14 @@
 import { api, parseOrThrow } from '@/lib';
 
 import type { Credentials } from '../validations';
-import { type SessionTokens, sessionTokensSchema, type User, userSchema } from './schemas';
+import {
+  type ActiveSession,
+  activeSessionsSchema,
+  type SessionTokens,
+  sessionTokensSchema,
+  type User,
+  userSchema,
+} from './schemas';
 
 /** Body transport, stated rather than inherited from the server default. */
 const REFRESH_TRANSPORT_BODY = 'body';
@@ -20,6 +27,16 @@ export const fetchMe = async (): Promise<User> => {
   const payload = await api.get('/auth/me');
 
   return parseOrThrow(userSchema, payload);
+};
+
+/**
+ * Every live session of the account, this device's included — the API does not
+ * say which one is the caller's, so a client cannot mark it.
+ */
+export const fetchSessions = async (): Promise<ActiveSession[]> => {
+  const payload = await api.get('/auth/sessions');
+
+  return parseOrThrow(activeSessionsSchema, payload);
 };
 
 /**

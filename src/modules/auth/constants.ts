@@ -9,4 +9,5 @@ export const REFRESH_TOKEN_STORAGE_KEY = 'auth.refreshToken';
 /** `as const` so TanStack Query sees a stable, literal key. */
 export const AUTH_QUERY_KEYS = {
   ME: ['auth', 'me'],
+  SESSIONS: ['auth', 'sessions'],
 } as const;

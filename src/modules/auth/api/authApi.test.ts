@@ -4,6 +4,7 @@ import {
   changePassword,
   confirmSignUp,
   fetchMe,
+  fetchSessions,
   login,
   logout,
   logoutEverywhere,
@@ -224,5 +225,29 @@ describe('changePassword', () => {
       newPassword: NEW_PASSWORD,
       refreshTransport: 'body',
     });
+  });
+});
+
+describe('fetchSessions', () => {
+  const session = {
+    id: '5b1f6c0e-2d7a-4c53-8a49-0e6f3d9b7a12',
+    createdAt: '2026-09-19T10:00:00.000Z',
+    expiresAt: '2026-11-18T10:00:00.000Z',
+    ip: null,
+    deviceLabel: 'Chrome on Android',
+    startedAt: '2026-09-01T12:00:00.000Z',
+  };
+
+  it('gets the sessions and parses them', async () => {
+    mockApi.get.mockResolvedValue([session]);
+
+    await expect(fetchSessions()).resolves.toEqual([session]);
+    expect(mockApi.get).toHaveBeenCalledWith('/auth/sessions');
+  });
+
+  it('throws an ApiError when the API drifts from the agreed shape', async () => {
+    mockApi.get.mockResolvedValue([{ ...session, id: 'not-a-uuid' }]);
+
+    await expect(fetchSessions()).rejects.toMatchObject({ code: 'UNEXPECTED_RESPONSE' });
   });
 });

@@ -13,4 +13,5 @@ export type AuthStackParamList = {
 export type AccountStackParamList = {
   Account: undefined;
   ChangePassword: undefined;
+  Sessions: undefined;
 };

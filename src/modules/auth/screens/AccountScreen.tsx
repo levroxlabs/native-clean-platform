@@ -9,6 +9,7 @@ import type { AccountStackParamList } from '../navigation/types';
 const COPY = {
   emailLabel: 'Signed in as',
   changePasswordLabel: 'Change password',
+  sessionsLabel: 'Active sessions',
   signOutLabel: 'Sign out',
   signOutEverywhereLabel: 'Sign out everywhere',
   confirmTitle: 'Sign out everywhere?',
@@ -73,6 +74,16 @@ export const AccountScreen = ({ navigation }: AccountScreenProps) => {
         <Text className="text-base font-semibold text-content-inverse">
           {COPY.changePasswordLabel}
         </Text>
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isSigningOut }}
+        className="w-full items-center rounded-lg border border-border px-4 py-3"
+        disabled={isSigningOut}
+        onPress={() => navigation.navigate('Sessions')}
+      >
+        <Text className="text-base font-semibold text-content">{COPY.sessionsLabel}</Text>
       </Pressable>
 
       <Pressable

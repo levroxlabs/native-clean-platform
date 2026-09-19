@@ -31,3 +31,21 @@ export const userSchema = z.object({
 });
 
 export type User = z.infer<typeof userSchema>;
+
+/**
+ * One entry per live session. `ip` and `deviceLabel` are null on a session
+ * opened before the API recorded them; `startedAt` never is — the API falls back
+ * to `createdAt` — so the app has no "session without a start" to render.
+ */
+export const activeSessionSchema = z.object({
+  id: z.uuid(),
+  createdAt: z.iso.datetime(),
+  expiresAt: z.iso.datetime(),
+  ip: z.string().nullable(),
+  deviceLabel: z.string().nullable(),
+  startedAt: z.iso.datetime(),
+});
+
+export const activeSessionsSchema = z.array(activeSessionSchema);
+
+export type ActiveSession = z.infer<typeof activeSessionSchema>;

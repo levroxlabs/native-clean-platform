@@ -1,4 +1,4 @@
-import { sessionTokensSchema, userSchema } from './schemas';
+import { activeSessionsSchema, sessionTokensSchema, userSchema } from './schemas';
 
 const VALID_EMAIL = 'user@example.com';
 
@@ -45,5 +45,32 @@ describe('sessionTokensSchema', () => {
     expect(
       sessionTokensSchema.safeParse({ accessToken: 'an-access', refreshToken: '' }).success,
     ).toBe(false);
+  });
+});
+
+describe('activeSessionsSchema', () => {
+  const session = {
+    id: '5b1f6c0e-2d7a-4c53-8a49-0e6f3d9b7a12',
+    createdAt: '2026-09-19T10:00:00.000Z',
+    expiresAt: '2026-11-18T10:00:00.000Z',
+    ip: '203.0.113.7',
+    deviceLabel: 'Chrome on Android',
+    startedAt: '2026-09-01T12:00:00.000Z',
+  };
+
+  it('parses the list the API returns', () => {
+    expect(activeSessionsSchema.safeParse([session]).success).toBe(true);
+  });
+
+  it('accepts null for the device and the address, which older sessions never recorded', () => {
+    expect(
+      activeSessionsSchema.safeParse([{ ...session, ip: null, deviceLabel: null }]).success,
+    ).toBe(true);
+  });
+
+  it('rejects an entry without a start, which the API promises is never null', () => {
+    const { startedAt: _startedAt, ...withoutStart } = session;
+
+    expect(activeSessionsSchema.safeParse([withoutStart]).success).toBe(false);
   });
 });
