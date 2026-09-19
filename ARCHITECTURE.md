@@ -11,7 +11,7 @@ não substituem este arquivo.
 NativeWind v4 (Tailwind 3.4) · React Navigation 7 · TanStack Query 5 · axios ·
 react-hook-form 7 + zod 4 · expo-secure-store · @react-native-community/netinfo ·
 Jest (jest-expo) +
-React Native Testing Library · Maestro · Biome · pnpm
+React Native Testing Library · Biome · pnpm
 
 ---
 
@@ -53,7 +53,6 @@ tsconfig.json               extends expo/tsconfig.base — strict, noUncheckedIn
 pnpm-workspace.yaml         settings do pnpm — pnpm 11 não lê mais .npmrc (§9)
 jest.setup.ts               EXPO_PUBLIC_* de teste + keychain em memória (mock de expo-secure-store)
 .env.example                EXPO_PUBLIC_API_URL — copie para .env antes de rodar
-.maestro/                   flows de teste E2E (Maestro) — só o README por enquanto
 docs/superpowers/           specs e planos das decisões já tomadas (testes unitários, E2E)
 src/
 ├── components/               primitivas de UI conhecidas de antemão como multi-app — exceção documentada à regra do segundo consumidor (ver abaixo, não "vazio")
@@ -332,7 +331,7 @@ agora com código: `auth` é o primeiro módulo a ter seu próprio navigator.
 ## 7. Testes
 
 **Jest**, via preset `jest-expo`, mais **React Native Testing Library** para
-componentes, e **Maestro** para E2E contra um build de dev client.
+componentes.
 
 - Tests são **colocados** — `cn.ts` + `cn.test.ts`, nunca numa pasta
   `__tests__/`. O sufixo `.test.ts`/`.test.tsx` não é só preferência de nome:
@@ -352,21 +351,10 @@ componentes, e **Maestro** para E2E contra um build de dev client.
 `pnpm test` **não** faz parte de `pnpm check` — typecheck e lint continuam
 sendo o portão rápido de pré-commit; teste roda sob demanda ou em CI.
 
-### E2E (Maestro)
-
-Flows vivem em `.maestro/`, na raiz — local de descoberta padrão do Maestro,
-fora de `src/` porque não é código de módulo (mesmo raciocínio de
-`biome.json` ou `metro.config.js` na raiz).
-
-- Exige um **build de dev client** (`expo-dev-client`), não Expo Go — a
-  partir do momento em que qualquer módulo adiciona código nativo próprio, o
-  Expo Go para de servir para E2E enquanto o dev client continua funcionando.
-- Elementos são selecionados por texto visível ou `testID`. Um `testID` só
-  entra quando a seleção por texto é ambígua (botão de ícone, texto
-  repetido) — nunca especulativamente.
-- **Nenhum flow existe ainda** — o app hoje só tem a tela `Home` e nenhum
-  backend de auth para testar contra. Desenho completo em
-  [`docs/superpowers/specs/2026-08-21-maestro-e2e-setup-design.md`](docs/superpowers/specs/2026-08-21-maestro-e2e-setup-design.md).
+Não há suíte de E2E neste repositório hoje — o Maestro foi removido porque
+exigia Android Studio ou Simulador iOS configurados localmente, o que este
+ambiente não tem. O histórico da decisão original está em
+[`docs/superpowers/specs/2026-08-21-maestro-e2e-setup-design.md`](docs/superpowers/specs/2026-08-21-maestro-e2e-setup-design.md).
 
 ---
 
@@ -374,9 +362,9 @@ fora de `src/` porque não é código de módulo (mesmo raciocínio de
 
 ```bash
 pnpm install
-pnpm start               # Metro — conecta ao dev client (requer build prévio)
-pnpm android              # abre no emulador/dispositivo Android (requer dev client instalado)
-pnpm ios                  # abre no simulador iOS (só macOS; requer dev client instalado)
+pnpm start               # Metro — abre o Expo Go / dev tools
+pnpm android              # abre no emulador/dispositivo Android via Expo Go
+pnpm ios                  # abre no simulador iOS via Expo Go (só macOS)
 pnpm web                  # abre no navegador
 pnpm check                # typecheck + lint — rodar antes de cada commit
 pnpm typecheck            # tsc --noEmit
@@ -385,14 +373,7 @@ pnpm lint:fix             # biome check --write
 pnpm format               # biome format --write
 pnpm test                 # jest --watchAll
 pnpm test:ci               # jest --ci
-pnpm e2e:build:ios         # builda e instala o dev client no simulador iOS
-pnpm e2e:build:android      # builda e instala o dev client no emulador Android
-pnpm test:e2e              # roda os flows do Maestro contra o dev client já instalado
 ```
-
-Como `expo-dev-client` é dependência do projeto, `pnpm start`/`android`/`ios`
-não abrem mais o Expo Go — é preciso instalar o dev client uma vez
-(`pnpm e2e:build:ios`/`:android`) antes de rodar esses comandos.
 
 ---
 
@@ -480,7 +461,7 @@ nenhum segundo consumidor apareceu ainda) · `src/hooks/`, `src/store/`
 (criados só quando algo precisar deles, §1) · telemetria e crash reporting
 (nenhum sink: a camada de erros não reporta para lugar nenhum) · fila de toasts,
 swipe para dispensar e boundary por tela (§6 da spec da camada de erros) · flow
-de E2E no Maestro · fronteira de módulo verificada por lint/dependency-cruiser
+de E2E · fronteira de módulo verificada por lint/dependency-cruiser
 (§2) · transporte por cookie no alvo web (o app pede sempre `refreshTransport:
 'body'`) · refresh proativo agendado pelo `exp` do JWT · listagem de sessões e
 revogação por aparelho (a API não expõe endpoint para enumerá-las).

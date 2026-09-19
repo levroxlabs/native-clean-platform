@@ -29,16 +29,11 @@ Requer pnpm. Se você não tem: `corepack enable pnpm`.
 ```bash
 pnpm install
 cp .env.example .env    # e ajuste EXPO_PUBLIC_API_URL se a API não estiver em localhost:3000
-pnpm start          # Metro — conecta ao dev client (requer build prévio, veja abaixo)
-pnpm android        # abre no emulador/dispositivo Android (requer dev client instalado)
-pnpm ios            # abre no simulador iOS (somente macOS; requer dev client instalado)
+pnpm start          # Metro — abre o Expo Go / dev tools
+pnpm android        # abre no emulador/dispositivo Android via Expo Go
+pnpm ios            # abre no simulador iOS via Expo Go (somente macOS)
 pnpm web            # abre no navegador
 ```
-
-Como `expo-dev-client` é uma dependência do projeto, `pnpm start`/`android`/`ios`
-não abrem mais o Expo Go — é preciso instalar o dev client uma vez
-(`pnpm e2e:build:ios` ou `pnpm e2e:build:android`, veja
-[`.maestro/README.md`](.maestro/README.md)) antes de rodar esses comandos.
 
 Checagens de qualidade:
 
@@ -50,9 +45,6 @@ pnpm lint:fix           # biome check --write (correções seguras)
 pnpm format             # biome format --write
 pnpm test               # jest --watchAll --coverage
 pnpm test:ci            # jest --ci --coverage
-pnpm e2e:build:ios      # builda e instala o dev client no simulador iOS
-pnpm e2e:build:android  # builda e instala o dev client no emulador Android
-pnpm test:e2e           # roda os flows do Maestro (.maestro/) no dev client já instalado
 ```
 
 ---
@@ -70,7 +62,6 @@ completo das convenções.
 App.tsx              raiz: providers + navegação
 biome.json            linter + formatter (substitui ESLint e Prettier)
 tailwind.config.js    lê os tokens de src/theme/tokens.js
-.maestro/             flows de teste E2E (Maestro)
 src/
   components/          compartilhados entre módulos (vazio por enquanto)
   screens/              telas sem módulo próprio
@@ -167,8 +158,9 @@ deslogado.
 - [x] **Padrões** — Biome substitui ESLint/Prettier, pnpm, convenções do
       projeto em `AGENTS.md`, código só em inglês, README por módulo,
       sem strings ou números mágicos, testes unitários com jest-expo +
-      React Native Testing Library, infraestrutura de E2E com Maestro
-      (sem flows ainda — veja `.maestro/README.md`).
+      React Native Testing Library. Sem E2E por enquanto — o Maestro foi
+      removido por exigir Android Studio/Simulador iOS configurados
+      localmente.
 - [x] **Auth** — módulo em `src/modules/auth/` contra `api-clean-platform`:
       cliente HTTP (axios) em `src/lib/`, `useAuth()` / `AuthProvider`,
       refresh token rotativo no `expo-secure-store` (o access token fica só em

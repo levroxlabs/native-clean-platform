@@ -12,7 +12,6 @@
     "axios": "1.20.0",
     "clsx": "2.1.1",
     "expo": "57.0.22",
-    "expo-dev-client": "57.0.19",
     "expo-secure-store": "57.0.4",
     "expo-status-bar": "57.0.1",
     "nativewind": "4.2.6",
@@ -42,8 +41,8 @@
   },
   "scripts": {
     "start": "expo start",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
@@ -51,10 +50,7 @@
     "typecheck": "tsc --noEmit",
     "check": "pnpm typecheck && pnpm lint",
     "test": "jest --watchAll --coverage",
-    "test:ci": "jest --ci --coverage",
-    "e2e:build:ios": "expo run:ios",
-    "e2e:build:android": "expo run:android",
-    "test:e2e": "maestro test .maestro"
+    "test:ci": "jest --ci --coverage"
   },
   "jest": {
     "preset": "jest-expo",
