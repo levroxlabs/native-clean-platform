@@ -3,6 +3,7 @@ import { api } from '@/lib';
 import {
   changePassword,
   confirmSignUp,
+  deleteAccount,
   fetchMe,
   fetchSessions,
   login,
@@ -17,7 +18,7 @@ import {
 
 jest.mock('@/lib', () => ({
   ...jest.requireActual('@/lib'),
-  api: { get: jest.fn(), post: jest.fn() },
+  api: { get: jest.fn(), post: jest.fn(), delete: jest.fn() },
 }));
 
 const mockApi = api as jest.Mocked<typeof api>;
@@ -40,6 +41,7 @@ const PROFILE = {
 beforeEach(() => {
   mockApi.get.mockReset();
   mockApi.post.mockReset();
+  mockApi.delete.mockReset();
 });
 
 describe('login', () => {
@@ -249,5 +251,16 @@ describe('fetchSessions', () => {
     mockApi.get.mockResolvedValue([{ ...session, id: 'not-a-uuid' }]);
 
     await expect(fetchSessions()).rejects.toMatchObject({ code: 'UNEXPECTED_RESPONSE' });
+  });
+});
+
+describe('deleteAccount', () => {
+  it('sends the password in the body and parses nothing, since the API answers 204', async () => {
+    mockApi.delete.mockResolvedValue(null);
+
+    await expect(deleteAccount({ password: CREDENTIALS.password })).resolves.toBeUndefined();
+    // The body is mandatory: the API rejects a DELETE with none as malformed.
+    // The account id is never sent — the API takes it from the bearer token.
+    expect(mockApi.delete).toHaveBeenCalledWith('/auth/me', { password: CREDENTIALS.password });
   });
 });

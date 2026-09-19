@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { AccountScreen } from '../screens/AccountScreen';
 import { ChangePasswordScreen } from '../screens/ChangePasswordScreen';
+import { DeleteAccountScreen } from '../screens/DeleteAccountScreen';
 import { SessionsScreen } from '../screens/SessionsScreen';
 import type { AccountStackParamList } from './types';
 
@@ -12,6 +13,7 @@ const SCREEN_TITLES = {
   account: 'Account',
   changePassword: 'Change password',
   sessions: 'Active sessions',
+  deleteAccount: 'Delete account',
 } as const;
 
 /**
@@ -34,6 +36,11 @@ export const AccountStack = () => (
       name="Sessions"
       component={SessionsScreen}
       options={{ title: SCREEN_TITLES.sessions }}
+    />
+    <Stack.Screen
+      name="DeleteAccount"
+      component={DeleteAccountScreen}
+      options={{ title: SCREEN_TITLES.deleteAccount }}
     />
   </Stack.Navigator>
 );

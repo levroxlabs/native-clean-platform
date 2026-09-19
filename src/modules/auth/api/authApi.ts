@@ -77,6 +77,10 @@ interface ResetPasswordInput {
   newPassword: string;
 }
 
+interface DeleteAccountInput {
+  password: string;
+}
+
 interface ChangePasswordInput {
   currentPassword: string;
   newPassword: string;
@@ -147,4 +151,15 @@ export const changePassword = async (input: ChangePasswordInput): Promise<Sessio
   });
 
   return parseOrThrow(sessionTokensSchema, payload);
+};
+
+/**
+ * Deletes the authenticated account for good — the API has no grace period and
+ * exports nothing first. Answers 204, so there is nothing to parse.
+ *
+ * The body is mandatory: the API rejects a DELETE with none as malformed. The
+ * account id is never sent, because the API takes it from the bearer token.
+ */
+export const deleteAccount = async (input: DeleteAccountInput): Promise<void> => {
+  await api.delete('/auth/me', input);
 };

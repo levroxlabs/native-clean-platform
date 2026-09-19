@@ -40,6 +40,7 @@ beforeEach(() => {
     signIn: jest.fn(),
     confirmSignUp: mockConfirmSignUp,
     changePassword: jest.fn(),
+    deleteAccount: jest.fn(),
     signOut: jest.fn(),
     signOutEverywhere: jest.fn(),
     isSubmitting: false,

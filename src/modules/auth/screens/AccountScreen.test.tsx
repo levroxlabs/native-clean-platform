@@ -16,6 +16,7 @@ const BUTTON_ROLE = 'button';
 const VALID_EMAIL = 'user@example.com';
 const CHANGE_PASSWORD_LABEL = 'Change password';
 const SESSIONS_LABEL = 'Active sessions';
+const DELETE_ACCOUNT_LABEL = 'Delete account';
 const SIGN_OUT_LABEL = 'Sign out';
 const SIGN_OUT_EVERYWHERE_LABEL = 'Sign out everywhere';
 /** The Alert's destructive button carries the same label as the plain sign-out one. */
@@ -34,6 +35,7 @@ const mockSignOutEverywhere = jest.fn(async () => undefined);
 
 const changePasswordButton = () => screen.getByRole(BUTTON_ROLE, { name: CHANGE_PASSWORD_LABEL });
 const sessionsButton = () => screen.getByRole(BUTTON_ROLE, { name: SESSIONS_LABEL });
+const deleteAccountButton = () => screen.getByRole(BUTTON_ROLE, { name: DELETE_ACCOUNT_LABEL });
 const signOutButton = () => screen.getByRole(BUTTON_ROLE, { name: SIGN_OUT_LABEL });
 const signOutEverywhereButton = () =>
   screen.getByRole(BUTTON_ROLE, { name: SIGN_OUT_EVERYWHERE_LABEL });
@@ -53,6 +55,7 @@ const givenSession = (overrides: Partial<ReturnType<typeof useAuth>> = {}) => {
     signIn: jest.fn(),
     confirmSignUp: jest.fn(),
     changePassword: jest.fn(),
+    deleteAccount: jest.fn(),
     signOut: mockSignOut,
     signOutEverywhere: mockSignOutEverywhere,
     isSubmitting: false,
@@ -95,6 +98,13 @@ describe('AccountScreen', () => {
     await fireEvent.press(sessionsButton());
 
     expect(navigation.navigate).toHaveBeenCalledWith('Sessions');
+  });
+
+  it('opens the account deletion screen', async () => {
+    await renderScreen();
+    await fireEvent.press(deleteAccountButton());
+
+    expect(navigation.navigate).toHaveBeenCalledWith('DeleteAccount');
   });
 
   it('signs out on this device without asking', async () => {
@@ -141,6 +151,7 @@ describe('AccountScreen', () => {
 
     expect(changePasswordButton()).toBeDisabled();
     expect(sessionsButton()).toBeDisabled();
+    expect(deleteAccountButton()).toBeDisabled();
     expect(signOutButton()).toBeDisabled();
     expect(signOutEverywhereButton()).toBeDisabled();
   });

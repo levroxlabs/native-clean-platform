@@ -42,6 +42,10 @@ export const changePasswordSchema = z
     path: [CONFIRM_PASSWORD_FIELD],
   });
 
+/** Presence only, for the reason on `changePasswordSchema`: the API judges it. */
+export const deleteAccountSchema = z.object({ password: submittedPasswordSchema });
+
 export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
+export type DeleteAccountValues = z.infer<typeof deleteAccountSchema>;

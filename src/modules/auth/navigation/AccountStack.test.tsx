@@ -22,6 +22,7 @@ const mockUseSessions = useSessions as jest.MockedFunction<typeof useSessions>;
 const VALID_EMAIL = 'user@example.com';
 const CHANGE_PASSWORD_LABEL = 'Change password';
 const SESSIONS_LABEL = 'Active sessions';
+const DELETE_ACCOUNT_LABEL = 'Delete account';
 
 const PROFILE = {
   id: '0d3d5d8a-6f2e-4d2e-9f1a-6d0f9a3b5c21',
@@ -75,6 +76,7 @@ beforeEach(() => {
     signIn: jest.fn(),
     confirmSignUp: jest.fn(),
     changePassword: jest.fn(),
+    deleteAccount: jest.fn(),
     signOut: jest.fn(),
     signOutEverywhere: jest.fn(),
     isSubmitting: false,
@@ -104,5 +106,13 @@ describe('AccountStack', () => {
     await fireEvent.press(screen.getByRole('button', { name: SESSIONS_LABEL }));
 
     expect(await screen.findByText('Chrome on Android')).toBeTruthy();
+  });
+
+  it('navigates to the account deletion screen on "Delete account"', async () => {
+    await renderStack();
+
+    await fireEvent.press(screen.getByRole('button', { name: DELETE_ACCOUNT_LABEL }));
+
+    expect(await screen.findByText('Delete your account')).toBeTruthy();
   });
 });

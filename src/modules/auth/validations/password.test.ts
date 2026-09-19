@@ -1,4 +1,9 @@
-import { changePasswordSchema, forgotPasswordSchema, resetPasswordSchema } from './password';
+import {
+  changePasswordSchema,
+  deleteAccountSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from './password';
 
 const VALID_EMAIL = 'user@example.com';
 const VALID_TOKEN = 'Yk9wYVF1ZVRva2VuRXhhbXBsZVZhbHVlMTIzNDU2Nzg5';
@@ -77,5 +82,15 @@ describe('changePasswordSchema', () => {
 
   it('rejects a confirmation that does not match', () => {
     expect(changeWith({ confirmPassword: CURRENT_PASSWORD }).success).toBe(false);
+  });
+});
+
+describe('deleteAccountSchema', () => {
+  it('accepts any non-empty password, since the API judges whether it is the right one', () => {
+    expect(deleteAccountSchema.safeParse({ password: 'x' }).success).toBe(true);
+  });
+
+  it('rejects an empty password', () => {
+    expect(deleteAccountSchema.safeParse({ password: '' }).success).toBe(false);
   });
 });

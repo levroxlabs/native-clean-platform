@@ -10,6 +10,7 @@ const COPY = {
   emailLabel: 'Signed in as',
   changePasswordLabel: 'Change password',
   sessionsLabel: 'Active sessions',
+  deleteAccountLabel: 'Delete account',
   signOutLabel: 'Sign out',
   signOutEverywhereLabel: 'Sign out everywhere',
   confirmTitle: 'Sign out everywhere?',
@@ -104,6 +105,16 @@ export const AccountScreen = ({ navigation }: AccountScreenProps) => {
         onPress={confirmSignOutEverywhere}
       >
         <Text className="text-base font-semibold text-danger">{COPY.signOutEverywhereLabel}</Text>
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isSigningOut }}
+        className="w-full items-center rounded-lg border border-danger px-4 py-3"
+        disabled={isSigningOut}
+        onPress={() => navigation.navigate('DeleteAccount')}
+      >
+        <Text className="text-base font-semibold text-danger">{COPY.deleteAccountLabel}</Text>
       </Pressable>
     </View>
   );

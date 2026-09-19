@@ -1,22 +1,31 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
+import { API_ERROR_CODES, ApiError } from '@/lib';
+
 import {
   changePassword as changePasswordRequest,
   confirmSignUp as confirmSignUpRequest,
+  deleteAccount as deleteAccountRequest,
   login,
   logout,
   logoutEverywhere,
 } from '../api/authApi';
 import { AUTH_QUERY_KEYS } from '../constants';
 import { readRefreshToken } from '../storage';
-import type { ChangePasswordValues, ConfirmSignUpValues, Credentials } from '../validations';
+import type {
+  ChangePasswordValues,
+  ConfirmSignUpValues,
+  Credentials,
+  DeleteAccountValues,
+} from '../validations';
 import type { AuthSessionValue } from './useAuthSession';
 
 export interface AuthActionsValue {
   signIn: (credentials: Credentials) => Promise<void>;
   confirmSignUp: (values: ConfirmSignUpValues) => Promise<void>;
   changePassword: (values: ChangePasswordValues) => Promise<void>;
+  deleteAccount: (values: DeleteAccountValues) => Promise<void>;
   signOut: () => Promise<void>;
   signOutEverywhere: () => Promise<void>;
   isSubmitting: boolean;
@@ -77,6 +86,27 @@ export const useAuthActions = ({
     networkMode: 'always',
   });
 
+  const deleteAccountMutation = useMutation({
+    mutationFn: async ({ password }: DeleteAccountValues) => {
+      try {
+        await deleteAccountRequest({ password });
+      } catch (error) {
+        // The account is already gone — a second tap, or another device won the
+        // race while this access token was still valid — so what the user asked
+        // for holds. Ending the session beats leaving them stuck behind a toast.
+        if (!(error instanceof ApiError && error.code === API_ERROR_CODES.USER_NOT_FOUND)) {
+          throw error;
+        }
+      }
+
+      // No logout call: the deletion took every refresh token of the account
+      // with it, so there is nothing left on the server to revoke.
+      await endSession();
+      queryClient.clear();
+    },
+    networkMode: 'always',
+  });
+
   const signOutMutation = useMutation({
     mutationFn: async () => {
       // Best effort end to end: nothing here may reject. A keychain read, the
@@ -123,12 +153,14 @@ export const useAuthActions = ({
       signIn: signInMutation.mutateAsync,
       confirmSignUp: confirmSignUpMutation.mutateAsync,
       changePassword: changePasswordMutation.mutateAsync,
+      deleteAccount: deleteAccountMutation.mutateAsync,
       signOut: signOutMutation.mutateAsync,
       signOutEverywhere: signOutEverywhereMutation.mutateAsync,
       isSubmitting:
         signInMutation.isPending ||
         confirmSignUpMutation.isPending ||
-        changePasswordMutation.isPending,
+        changePasswordMutation.isPending ||
+        deleteAccountMutation.isPending,
       isSigningOut: signOutMutation.isPending || signOutEverywhereMutation.isPending,
     }),
     [
@@ -138,6 +170,8 @@ export const useAuthActions = ({
       confirmSignUpMutation.isPending,
       changePasswordMutation.mutateAsync,
       changePasswordMutation.isPending,
+      deleteAccountMutation.mutateAsync,
+      deleteAccountMutation.isPending,
       signOutMutation.mutateAsync,
       signOutMutation.isPending,
       signOutEverywhereMutation.mutateAsync,

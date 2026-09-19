@@ -6,6 +6,7 @@ import { API_ERROR_CODES, ApiError } from '@/lib';
 import {
   changePassword,
   confirmSignUp,
+  deleteAccount,
   fetchMe,
   login,
   logout,
@@ -26,6 +27,7 @@ const mockLogoutEverywhere = logoutEverywhere as jest.MockedFunction<typeof logo
 const mockRefreshSession = refreshSession as jest.MockedFunction<typeof refreshSession>;
 const mockConfirmSignUp = confirmSignUp as jest.MockedFunction<typeof confirmSignUp>;
 const mockChangePassword = changePassword as jest.MockedFunction<typeof changePassword>;
+const mockDeleteAccount = deleteAccount as jest.MockedFunction<typeof deleteAccount>;
 
 const ACCESS_TOKEN = 'a-signed-token';
 const REFRESH_TOKEN = 'a-refresh-token';
@@ -53,6 +55,7 @@ const PROFILE = {
 const SIGN_IN_LABEL = 'probe-sign-in';
 const CONFIRM_SIGN_UP_LABEL = 'probe-confirm-sign-up';
 const CHANGE_PASSWORD_LABEL = 'probe-change-password';
+const DELETE_ACCOUNT_LABEL = 'probe-delete-account';
 const SIGN_OUT_LABEL = 'probe-sign-out';
 const SIGN_OUT_EVERYWHERE_LABEL = 'probe-sign-out-everywhere';
 
@@ -74,6 +77,7 @@ const Probe = () => {
     signIn,
     confirmSignUp: confirmSignUpAction,
     changePassword: changePasswordAction,
+    deleteAccount: deleteAccountAction,
     signOut,
     signOutEverywhere,
   } = useAuth();
@@ -102,6 +106,14 @@ const Probe = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      await deleteAccountAction({ password: CREDENTIALS.password });
+    } catch {
+      // Swallowed — see comment above.
+    }
+  };
+
   const handleSignOutEverywhere = async () => {
     try {
       await signOutEverywhere();
@@ -122,6 +134,9 @@ const Probe = () => {
       </Pressable>
       <Pressable onPress={handleChangePassword}>
         <Text>{CHANGE_PASSWORD_LABEL}</Text>
+      </Pressable>
+      <Pressable onPress={handleDeleteAccount}>
+        <Text>{DELETE_ACCOUNT_LABEL}</Text>
       </Pressable>
       <Pressable onPress={() => signOut()}>
         <Text>{SIGN_OUT_LABEL}</Text>
@@ -332,6 +347,57 @@ describe('AuthProvider', () => {
 
     expect(await screen.findByText('status:signedIn')).toBeTruthy();
     await expect(readRefreshToken()).resolves.toBe(ROTATED_REFRESH_TOKEN);
+  });
+
+  it('deletes the account, then ends the local session without a logout call', async () => {
+    mockDeleteAccount.mockResolvedValue(undefined);
+    await givenSignedIn();
+
+    await fireEvent.press(screen.getByText(DELETE_ACCOUNT_LABEL));
+
+    expect(await screen.findByText('status:signedOut')).toBeTruthy();
+    expect(mockDeleteAccount).toHaveBeenCalledWith({ password: CREDENTIALS.password });
+    // The account's refresh tokens died with it on the server, so there is
+    // nothing left for a logout call to revoke.
+    expect(mockLogout).not.toHaveBeenCalled();
+    await expect(readRefreshToken()).resolves.toBeNull();
+  });
+
+  it('keeps the session when the deletion is refused', async () => {
+    mockDeleteAccount.mockRejectedValue(
+      new ApiError({
+        status: 422,
+        code: API_ERROR_CODES.INVALID_CURRENT_PASSWORD,
+        message: 'never rendered',
+      }),
+    );
+    await givenSignedIn();
+
+    await fireEvent.press(screen.getByText(DELETE_ACCOUNT_LABEL));
+
+    await waitFor(() => {
+      expect(mockDeleteAccount).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.getByText('status:signedIn')).toBeTruthy();
+    await expect(readRefreshToken()).resolves.toBe(ROTATED_REFRESH_TOKEN);
+  });
+
+  it('ends the session when the API says the account is already gone', async () => {
+    // A second tap, or another device that deleted it first while this access
+    // token was still valid: the state the user asked for already holds.
+    mockDeleteAccount.mockRejectedValue(
+      new ApiError({
+        status: 404,
+        code: API_ERROR_CODES.USER_NOT_FOUND,
+        message: 'never rendered',
+      }),
+    );
+    await givenSignedIn();
+
+    await fireEvent.press(screen.getByText(DELETE_ACCOUNT_LABEL));
+
+    expect(await screen.findByText('status:signedOut')).toBeTruthy();
+    await expect(readRefreshToken()).resolves.toBeNull();
   });
 
   it('signs out, revoking this device session on the server', async () => {

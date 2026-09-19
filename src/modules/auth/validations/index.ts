@@ -2,6 +2,8 @@ export { type Credentials, type SignUpValues, signInSchema, signUpSchema } from 
 export {
   type ChangePasswordValues,
   changePasswordSchema,
+  type DeleteAccountValues,
+  deleteAccountSchema,
   type ForgotPasswordValues,
   forgotPasswordSchema,
   type ResetPasswordValues,

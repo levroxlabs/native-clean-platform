@@ -1,5 +1,10 @@
 import type { User } from './api/schemas';
-import type { ChangePasswordValues, ConfirmSignUpValues, Credentials } from './validations';
+import type {
+  ChangePasswordValues,
+  ConfirmSignUpValues,
+  Credentials,
+  DeleteAccountValues,
+} from './validations';
 
 export const AUTH_STATUSES = {
   LOADING: 'loading',
@@ -25,6 +30,13 @@ export interface AuthContextValue {
    * screen can put the reason on the field it belongs to.
    */
   changePassword: (values: ChangePasswordValues) => Promise<void>;
+  /**
+   * Deletes the account and ends the local session, with no logout call: the
+   * account's refresh tokens died with it on the server. Rejects on failure and
+   * keeps the session so the screen can show why. An account the API reports as
+   * already gone counts as success.
+   */
+  deleteAccount: (values: DeleteAccountValues) => Promise<void>;
   signOut: () => Promise<void>;
   /**
    * Ends every session of this account. Unlike `signOut` it rejects on failure
