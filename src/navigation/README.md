@@ -36,11 +36,11 @@ Este módulo lista **módulos, não telas**: as telas de um módulo ficam no
 - `NavigatorScreenParams` é o que mantém um `navigate('App', { screen: 'Home' })`
   tipado. Sem ele o `screen` aninhado não é verificado. A rota `Account` usa o
   mesmo mecanismo: ela é o navigator inteiro do módulo `auth`, não uma tela.
-- **A área de conta é um módulo, não duas telas soltas.** `Account` e
-  `ChangePassword` são do `auth` — mexem em credencial e sessão — então o
+- **A área de conta é um módulo, não telas soltas.** `Account`,
+  `ChangePassword`, `Sessions` e `DeleteAccount` são do `auth` — mexem em credencial e sessão — então o
   módulo exporta o `AccountStack` e o `AppStack` registra um `Stack.Screen` só,
   com `headerShown: false` para o stack de dentro não empilhar um segundo
-  header. Registrar as duas telas direto aqui daria menos código e faria o
+  header. Registrar as telas direto aqui daria menos código e faria o
   `src/navigation/` importar arquivos de dentro do módulo, que é exatamente a
   fronteira que a regra 5 do `AGENTS.md` proíbe.
 

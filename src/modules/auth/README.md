@@ -2,9 +2,11 @@
 
 Sessão do app: cadastro em três passos com verificação de e-mail, login,
 recuperação e troca de senha, rotação do refresh token, restauração da sessão no
-boot, logout (neste aparelho ou em todos) e o estado que a navegação usa para
-escolher entre o stack logado e o deslogado. Fala com os onze endpoints de
-`/auth` da API (`api-clean-platform`).
+boot, logout (neste aparelho ou em todos), listagem das sessões ativas, exclusão
+da conta e o estado que a navegação usa para escolher entre o stack logado e o
+deslogado. Fala com treze dos catorze endpoints de `/auth` da API
+(`api-clean-platform`): só `POST /auth/google` não tem caller, adiado até o
+primeiro app se aproximar do release.
 
 ## Components
 
@@ -12,13 +14,13 @@ escolher entre o stack logado e o deslogado. Fala com os onze endpoints de
 | ----------- | ------------------------------------------------------------------ |
 | `AuthProvider` | Guarda o token e o usuário. Registra-se no cliente HTTP na montagem. |
 | `AuthStack` | Navigator do fluxo deslogado: `SignIn`, `SignUp`, `VerifyEmail`, `ForgotPassword` e `ResetPassword`. |
-| `AccountStack` | Navigator da área logada: `Account` e `ChangePassword`. O `AppStack` o registra como **uma** tela. |
+| `AccountStack` | Navigator da área logada: `Account`, `ChangePassword`, `Sessions` e `DeleteAccount`. O `AppStack` o registra como **uma** tela. |
 
 ## Hooks
 
 | Name       | Description                                                              |
 | ---------- | -------------------------------------------------------------------------- |
-| `useAuth()` | `{ status, user, signIn, confirmSignUp, changePassword, signOut, signOutEverywhere, isSubmitting, isSigningOut }`. Lança se usado fora do `AuthProvider`. |
+| `useAuth()` | `{ status, user, signIn, confirmSignUp, changePassword, deleteAccount, signOut, signOutEverywhere, isSubmitting, isSigningOut }`. Lança se usado fora do `AuthProvider`. |
 
 ## Constants
 
@@ -35,16 +37,17 @@ escolher entre o stack logado e o deslogado. Fala com os onze endpoints de
 | `User`               | Perfil de `/auth/me`. Datas são strings ISO.            |
 | `Credentials`        | `{ email, password }`.                                  |
 | `AuthStackParamList` | Parâmetros das rotas do fluxo deslogado. `SignIn` e `VerifyEmail` aceitam um `email` opcional; `ResetPassword` exige um. |
-| `AccountStackParamList` | Parâmetros das rotas da área logada (`Account`, `ChangePassword`). |
+| `AccountStackParamList` | Parâmetros das rotas da área logada (`Account`, `ChangePassword`, `Sessions`, `DeleteAccount`). |
 
 ## Flow
 
 Cada tela do fluxo deslogado (`AuthStack`) e da área logada (`AccountStack`)
 aparece como nó próprio, com a navegação real entre elas. `SignIn`,
-`VerifyEmail`, `ChangePassword` e `Account` passam pelo `AuthProvider` via
-`useAuth()`; `SignUp`, `ForgotPassword` e `ResetPassword` não escrevem nem
-leem sessão, então chamam a API direto pela própria `useMutation` — a mesma
-distinção já descrita em prosa nas Conventions abaixo. Pra fora do módulo, o
+`VerifyEmail`, `ChangePassword`, `DeleteAccount` e `Account` passam pelo
+`AuthProvider` via `useAuth()`; `SignUp`, `ForgotPassword` e `ResetPassword` não
+escrevem nem leem sessão, então chamam a API direto pela própria `useMutation`,
+e `Sessions` só lê, pela query de `useSessions` — a mesma distinção já descrita
+em prosa nas Conventions abaixo. Pra fora do módulo, o
 diagrama cruza a fronteira em `lib/api` (onde o `AuthProvider` registra o
 bearer token via `configureAuthorization`), `navigation/RootStack` (que lê
 `status`) e `errors` (onde `App.tsx` registra `AUTH_ERROR_COPY`).
@@ -62,6 +65,8 @@ flowchart TD
   subgraph AccountStack["AccountStack (logado)"]
     Account["Account"]
     ChangePassword["ChangePassword"]
+    Sessions["Sessions"]
+    DeleteAccount["DeleteAccount"]
   end
 
   SignIn -- "Cadastrar" --> SignUp
@@ -72,6 +77,8 @@ flowchart TD
 
   Account -- "Trocar senha" --> ChangePassword
   ChangePassword -- "changePassword OK" --> Account
+  Account -- "Sessões ativas" --> Sessions
+  Account -- "Excluir conta" --> DeleteAccount
 
   Provider["AuthContext / AuthProvider"]
   Api["api/authApi"]
@@ -80,12 +87,14 @@ flowchart TD
   SignIn -. "useAuth().signIn" .-> Provider
   VerifyEmail -. "useAuth().confirmSignUp" .-> Provider
   ChangePassword -. "useAuth().changePassword" .-> Provider
+  DeleteAccount -. "useAuth().deleteAccount" .-> Provider
   Account -. "signOut / signOutEverywhere" .-> Provider
 
   SignUp -. "useMutation(startSignUp)" .-> Api
   VerifyEmail -. "useMutation(resendVerificationCode)" .-> Api
   ForgotPassword -. "useMutation(requestPasswordReset)" .-> Api
   ResetPassword -. "useMutation(resetPassword)" .-> Api
+  Sessions -. "useSessions (useQuery fetchSessions)" .-> Api
 
   Provider --> Api
   Provider --> Storage
@@ -148,10 +157,11 @@ flowchart TD
   errado, expirado e esgotado/já usado. Texto que adivinhasse entre eles
   devolveria o oráculo que ela recusou.
 - **O que passa pelo `AuthContext` é o que mexe na sessão.** `signIn`,
-  `confirmSignUp`, `changePassword`, `signOut` e `signOutEverywhere`.
+  `confirmSignUp`, `changePassword`, `deleteAccount`, `signOut` e
+  `signOutEverywhere`.
   `startSignUp`, `resendVerificationCode`, `requestPasswordReset` e
   `resetPassword` não escrevem nem leem token e não mudam `status`: são
-  `useMutation` na própria tela, com o `isPending` dela. Pôr as nove no contexto
+  `useMutation` na própria tela, com o `isPending` dela. Pô-las no contexto
   faria `isSubmitting` significar quatro coisas sem relação ao mesmo tempo.
 - **`changePassword` grava o token novo e mantém a sessão.** A API revoga as
   outras sessões e devolve um par novo para este aparelho; por isso ele usa
@@ -167,14 +177,41 @@ flowchart TD
   está verificada não tem cadastro pendente (a linha é consumida quando a conta
   é criada), então `resend` não acharia nada e `confirm` não teria como passar.
   Mandar o usuário para a `VerifyEmail` seria um beco sem saída: só copy.
-- **A área de conta é um navigator próprio.** `Account` e `ChangePassword` são
-  deste módulo — mexem em credencial e sessão — então o módulo exporta o
+- **A área de conta é um navigator próprio.** `Account`, `ChangePassword`,
+  `Sessions` e `DeleteAccount` são deste módulo — mexem em credencial e sessão — então o módulo exporta o
   `AccountStack` e o `AppStack` registra uma tela só. O interno do módulo para
   no navigator dele, que é a regra que o `RootStack` já escreve.
-- **A `Account` não mostra data nenhuma.** `/auth/me` também devolve
-  `createdAt` e `emailVerifiedAt`; renderizar qualquer um exigiria um
-  formatador, uma decisão de locale e um `Date` cujo único consumidor é a
-  própria formatação.
+- **A `Account` não mostra data nenhuma; a `Sessions` mostra uma.** `/auth/me`
+  também devolve `createdAt` e `emailVerifiedAt`, e renderizar qualquer um
+  exigiria um formatador cujo único consumidor seria ele mesmo. A lista de
+  sessões tem um consumidor de verdade: `startedAt` é o que responde "fui eu?",
+  então `formatSessionDate` usa o `toLocaleString()` do aparelho, sem biblioteca
+  nem decisão de locale.
+- **A `Sessions` é só de leitura, e não pode ser mais que isso.** A API não
+  tem endpoint para encerrar uma sessão e não diz qual delas é a de quem chama,
+  então a tela não marca "este aparelho" nem oferece "encerrar esta": a única
+  ação possível é o "Sign out everywhere" da `Account`. `ip` e `deviceLabel`
+  vêm `null` em sessão anterior ao registro deles e ganham um texto de
+  fallback; `startedAt` nunca é `null`.
+- **A lista de sessões é sempre relida e é descartada com a sessão.**
+  `staleTime: 0` porque outro aparelho pode abrir ou encerrar uma a qualquer
+  momento. Um `changePassword` a invalida (a API revogou as outras), e o
+  `endSession` a remove do cache: sem isso, a próxima conta a entrar no mesmo
+  aparelho veria a lista da anterior até o refetch chegar.
+- **`deleteAccount` não chama `/auth/logout`.** A exclusão é hard delete e
+  leva os refresh tokens da conta junto, então não sobra o que revogar; o
+  contexto só encerra a sessão local e esvazia o cache. Como `signOutEverywhere`,
+  ele rejeita e **mantém** a sessão se falhar — a tela mostra o motivo. Um
+  `USER_NOT_FOUND` conta como sucesso: a conta já sumiu (segundo toque, ou outro
+  aparelho excluiu antes com o access token ainda válido) e o estado pedido já
+  vale.
+- **A confirmação da exclusão é a senha, sem `Alert`.** A ação é irreversível
+  e a API não dá prazo de arrependimento nem exporta nada, então a tela avisa
+  isso e pede a senha atual (só presença, como o `changePassword`; quem julga é
+  a API). O body do `DELETE /auth/me` é obrigatório. Como este app não tem login
+  com Google, toda conta tem senha e o formulário sempre a pede: quando o Google
+  entrar, uma conta só-Google não terá o que digitar, e o `/auth/me` vai
+  precisar dizer se a conta tem senha.
 - **Um token que a API rejeitou é apagado; um token que falhou por rede não.**
   Estar offline no boot não é motivo para exigir a senha de novo no próximo.
 - **A `message` da API nunca vai para a tela.** A copy sai de `@/errors`,
